@@ -1,5 +1,5 @@
 /*
- * midi-router.ino
+ * midiTranslator.ino
  * 
  * Copyright 2011 Warren Gill <mymaestro@gmail.com>
  * 
@@ -56,7 +56,14 @@ long powerSave;
 int notesOn = 0; // How many notes are on
 // Draw an eighth note on the LCD
 byte quaver[8] = { 0x02, 0x02, 0x03, 0x02, 0x02, 0x0E, 0x1E, 0x0C };
+
 char* theNoteNames[] = { "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
+
+// The three kinds of parameters you can change
+char* midiParameterName[] = { "Channel: ",
+                              "Program: ",
+                              "Volume:  " };
+
 // The sounds I have for each MIDI channel on my sound module
 char* midiChannelMessages[] = {
   "MIDI Babel Fish 0.79",
@@ -78,7 +85,11 @@ char* midiChannelMessages[] = {
   "16 Banjo  " };
 
 // The MIDI instrument for each channel
-byte midiProgram[] = {
+// General MIDI values
+//{ 0, 8, 3, 59, 40, 65, 73, 114, 33, 112, 5, 5, 79, 100, 118, 79, 106 };
+
+// Values for Roland SonicCell
+byte mProg[] = {
     0, // nothing
     8, //"01 Grand  "
     3, //"02 Hammond"
@@ -97,18 +108,33 @@ byte midiProgram[] = {
    79, //"15 Whistle"
   106, //"16 Banjo  "
   };
-  
-  
-//{ 0, 8, 3, 59, 40, 65, 73, 114, 33, 112, 5, 5, 79, 100, 118, 79, 106 };
 
-char* midiParameterName[] = { "Channel: ",
-                              "Program: ",
-                              "Volume:  " };
+// Individual volume level for each channel
+byte mVol[] = {
+    0, // nothing
+  100, //"01 Grand  "
+  100, //"02 Hammond"
+  100, //"03 Rhodes "
+  100, //"04 Wurly  "
+  100, //"05 DX7    "
+  100, //"06 Clavi  "
+  100, //"07 Vibes  "
+  100, //"08 Harmoni"
+  100, //"09 Miles  "
+  100, //"10 Drums  "
+  100, //"11 Jump   "
+  100, //"12 Oohs   "
+  100, //"13 Bass   "
+  100, //"14 Squeeze"
+  100, //"15 Whistle"
+  100, //"16 Banjo  "
+  };
+
 
 int midiParameterIndex = 0;  // Which parameter is changing
 int midiChannel = 1;        // User selected channel (1-16)
-//int midiProgram = 0;       // Program number (0-127)
-int midiVolume = 100;     // Volume selection (0-127)
+byte midiProgram[17];
+byte midiVolume[17];
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
@@ -242,16 +268,16 @@ void HandleEncoderTurn() {
 
       case 2: // Volume
         if (Pos > oldPos) { // turning clockwise
-          midiVolume++;
-          if (midiVolume > 127) midiVolume = 0;
+          midiVolume[midiChannel]++;
+          if (midiVolume[midiChannel] > 127) midiVolume[midiChannel] = 0;
         } else {
-          midiVolume--;
-          if (midiVolume < 0) midiVolume = 127;
+          midiVolume[midiChannel]--;
+          if (midiVolume[midiChannel] < 0) midiVolume[midiChannel] = 127;
         }
-        MIDI.sendControlChange(0x07, midiVolume, midiChannel);
-        displayVolumeMessage(midiVolume);
+        MIDI.sendControlChange(0x07, midiVolume[midiChannel], midiChannel);
+        displayVolumeMessage(midiVolume[midiChannel]);
         lcd.setCursor(0, 3);
-        lbg.drawValue(midiVolume, 127);
+        lbg.drawValue(midiVolume[midiChannel], 127);
         break;
       }
       delay(20);
@@ -299,7 +325,7 @@ void turnBacklightOff() {
 }
 
 void EnterSetupMenu() {
-  // midiPanicButton();
+  // Clear the screen and print the welcome message
   lcd.clear();
   // Print a message to the LCD.
   lcd.setCursor(0, 0);
@@ -309,36 +335,21 @@ void EnterSetupMenu() {
   lcd.setCursor(0, 2);
   lcd.print("Press+turn:");
   lcd.setCursor(0, 3);
-  lcd.print("   Change parameter ");  
+  lcd.print("   Change parameter ");
+  // Rest the indices, channel, volume, and program settings
   midiParameterIndex = 0;
   midiChannel = 1;
-  midiVolume = 100;
-  byte midiProgram[] = {
-    0, // nothing
-    8, //"01 Grand  "
-    3, //"02 Hammond"
-   59, //"03 Rhodes "
-   40, //"04 Wurly  "
-   65, //"05 DX7    "
-   73, //"06 Clavi  "
-  114, //"07 Vibes  "
-   33, //"08 Harmoni"
-  112,  //"09 Miles  "
-    5, //"10 Drums  "
-    5, //"11 Jump   "
-   79, //"12 Oohs   "
-  100, //"13 Bass   "
-  118, //"14 Squeeze"
-   79, //"15 Whistle"
-  106, //"16 Banjo  "
-  };
+  memcpy(midiVolume, mVol, sizeof mVol[0] * 17);
+  memcpy(midiProgram, mProg, sizeof mProg[0] * 17);
+  
+  // Wait 2 seconds to read the screen
   delay(2000);
   lcd.clear();
   lcd.write(5);
   lcd.setCursor(1, 0);
   displayChannelMessage(midiChannel);
   displayProgramMessage(midiProgram[midiChannel]);
-  displayVolumeMessage(midiVolume);
+  displayVolumeMessage(midiVolume[midiChannel]);
   buttonPressed = false;
 }
 
