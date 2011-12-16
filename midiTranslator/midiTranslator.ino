@@ -59,7 +59,7 @@ byte quaver[8] = { 0x02, 0x02, 0x03, 0x02, 0x02, 0x0E, 0x1E, 0x0C };
 char* theNoteNames[] = { "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
 // The sounds I have for each MIDI channel on my sound module
 char* midiChannelMessages[] = {
-  "MIDI translator 0.73",
+  "MIDI Babel Fish 0.79",
   "01 Grand  ",
   "02 Hammond",
   "03 Rhodes ",
@@ -78,7 +78,28 @@ char* midiChannelMessages[] = {
   "16 Banjo  " };
 
 // The MIDI instrument for each channel
-byte midiProgram[] = { 0, 1, 17, 6, 5, 9, 8, 12, 23, 60, 1, 63, 54, 88, 22, 79, 106 };
+byte midiProgram[] = {
+    0, // nothing
+    8, //"01 Grand  "
+    3, //"02 Hammond"
+   59, //"03 Rhodes "
+   40, //"04 Wurly  "
+   65, //"05 DX7    "
+   73, //"06 Clavi  "
+  114, //"07 Vibes  "
+   33, //"08 Harmoni"
+  112,  //"09 Miles  "
+    5, //"10 Drums  "
+    5, //"11 Jump   "
+   79, //"12 Oohs   "
+  100, //"13 Bass   "
+  118, //"14 Squeeze"
+   79, //"15 Whistle"
+  106, //"16 Banjo  "
+  };
+  
+  
+//{ 0, 8, 3, 59, 40, 65, 73, 114, 33, 112, 5, 5, 79, 100, 118, 79, 106 };
 
 char* midiParameterName[] = { "Channel: ",
                               "Program: ",
@@ -107,7 +128,7 @@ void setup() {
   digitalWrite(encoder0PinB, HIGH);
 
   // Set up the rotary encoder
-  attachInterrupt(0, doEncoder_Expanded, CHANGE); // encoder pin on interrupt 0 (pin 2)
+  attachInterrupt(0, doEncoder, CHANGE); // encoder pin on interrupt 0 (pin 2)
   attachInterrupt(1, doButtonPress, CHANGE);      // button pin on interrupt 1 (pin 3)
   /* if this was set to RISING it would be able to tell if the button was really down
    * but the interrupt would have to detach and attach to FALLING, and vice versa
@@ -144,13 +165,12 @@ void loop() {
   cli();
   Pos = encoder0Pos;
   SREG = oldSREG;
-
-  HandleButtonPress();
-  HandleEncoderTurn();
-
-  if (millis() > powerSave) {
-    turnBacklightOff();
-  }
+  // The rotary encoder has turned
+  if(Pos != oldPos) HandleEncoderTurn();
+  // The button changed since last loop
+  if (buttonPressed != buttonLast) HandleButtonPress();
+  // Turn the back light off after timeout
+  if (millis() > powerSave) turnBacklightOff();
   MIDI.read();
 }
 
@@ -172,17 +192,21 @@ void HandleButtonPress() {
   if (buttonPressed != buttonLast) { // The button changed since last
     if (buttonPressed) {             // The button is down
       buttonDown = millis();         // Start button down timing
+      lcd.setCursor(19, 2);
+      lcd.write(5);
       turnBacklightOn();
     } else {                         // The button is up
       buttonPressTime = millis() - buttonDown; // How long the button was down
+      lcd.setCursor(19, 2);
+      lcd.print(" ");
       if ( Pos = oldPos ) {          // The encoder did not turn
         // If the button was pressed a long time but didn't turn, perform 
         //   the MIDI panic button or a reset, depending on how long
         if (buttonPressTime > RESET_BUTTON_TIME) {
-		  EnterSetupMenu;
-	    }    
+          EnterSetupMenu();
+        }    
         if ((buttonPressTime > MIDI_PANIC_TIME) && (buttonPressTime < RESET_BUTTON_TIME)) {
-          midiPanicButton;
+          midiPanicButton();
         }
       }
     }
@@ -190,48 +214,47 @@ void HandleButtonPress() {
   }
 }
 void HandleEncoderTurn() {
-  if(Pos != oldPos) { // The rotary encoder has turned
-    turnBacklightOn();
-    if(!buttonPressed) { // encoder is turning but not pressed in
-      switch (midiParameterIndex) {
-        case 0: // Channel
-          if(Pos > oldPos) { // turning clockwise
-            midiChannel++;
-            if (midiChannel > 16) midiChannel = 1;
-          } else { // turning counterclockwise
+  turnBacklightOn();
+  if(!buttonPressed) { // encoder is turning but not pressed in
+    switch (midiParameterIndex) {
+      case 0: // Channel
+        if(Pos > oldPos) { // turning clockwise
+          midiChannel++;
+          if (midiChannel > 16) midiChannel = 1;
+        } else { // turning counterclockwise
             midiChannel--;
             if (midiChannel < 1) midiChannel = 16;
-          }
-          displayChannelMessage(midiChannel);
-          displayProgramMessage(midiProgram[midiChannel]);
-          break;
+        }
+        displayChannelMessage(midiChannel);
+        displayProgramMessage(midiProgram[midiChannel]);
+        break;
+      case 1: // Program
+        if (Pos > oldPos) { // turning clockwise
+          midiProgram[midiChannel]++;
+          if (midiProgram[midiChannel] > 128) midiProgram[midiChannel] = 1;
+        } else { // turning counterclockwise
+          midiProgram[midiChannel]--;
+          if (midiProgram[midiChannel] < 1) midiProgram[midiChannel] = 128;
+        }
+        MIDI.sendProgramChange(midiProgram[midiChannel] - 1, midiChannel);
+        displayProgramMessage(midiProgram[midiChannel]);
+        break;
 
-        case 1: // Program
-          if (Pos > oldPos) { // turning clockwise
-            midiProgram[midiChannel]++;
-            if (midiProgram[midiChannel] > 128) midiProgram[midiChannel] = 1;
-          } else { // turning counterclockwise
-            midiProgram[midiChannel]--;
-            if (midiProgram[midiChannel] < 1) midiProgram[midiChannel] = 128;
-          }
-          MIDI.sendProgramChange(midiProgram[midiChannel] - 1, midiChannel);
-          displayProgramMessage(midiProgram[midiChannel]);
-          break;
-
-        case 2: // Volume
-          if (Pos > oldPos) { // turning clockwise
-            midiVolume++;
-            if (midiVolume > 127) midiVolume = 0;
-          } else {
-            midiVolume--;
-            if (midiVolume < 0) midiVolume = 127;
-          }
-          MIDI.sendControlChange(0x07, midiVolume, midiChannel);
-          displayVolumeMessage(midiVolume);
-          lcd.setCursor(0, 3);
-          lbg.drawValue(midiVolume, 127);
-          break;
+      case 2: // Volume
+        if (Pos > oldPos) { // turning clockwise
+          midiVolume++;
+          if (midiVolume > 127) midiVolume = 0;
+        } else {
+          midiVolume--;
+          if (midiVolume < 0) midiVolume = 127;
+        }
+        MIDI.sendControlChange(0x07, midiVolume, midiChannel);
+        displayVolumeMessage(midiVolume);
+        lcd.setCursor(0, 3);
+        lbg.drawValue(midiVolume, 127);
+        break;
       }
+      delay(20);
     } else { // button being held down
       lcd.setCursor(0, midiParameterIndex);
       lcd.print(" ");
@@ -244,9 +267,8 @@ void HandleEncoderTurn() {
       }
       lcd.setCursor(0, midiParameterIndex);
       lcd.write(5);
+      delay(20);
     }
-    delay(20);
-  }
   oldPos = Pos;
 }
 
@@ -258,6 +280,8 @@ void HandleEncoderTurn() {
  * CC 123 is All Notes Off
  */
 void midiPanicButton() {
+  lcd.setCursor(0, 3);
+  lcd.print("ALL NOTES OFF");
   for (int channel=1; channel <= 16; channel++) {
     MIDI.sendControlChange(120, 0, channel);
     MIDI.sendControlChange(123, 0, channel);
@@ -283,13 +307,31 @@ void EnterSetupMenu() {
   lcd.setCursor(0, 1);
   lcd.print("Turn: change setting");
   lcd.setCursor(0, 2);
-  lcd.print("Press/turn:");
+  lcd.print("Press+turn:");
   lcd.setCursor(0, 3);
   lcd.print("   Change parameter ");  
   midiParameterIndex = 0;
   midiChannel = 1;
   midiVolume = 100;
-  byte midiProgram[] = { 0, 1, 17, 6, 5, 9, 8, 12, 23, 60, 1, 63, 54, 88, 22, 79, 106 };
+  byte midiProgram[] = {
+    0, // nothing
+    8, //"01 Grand  "
+    3, //"02 Hammond"
+   59, //"03 Rhodes "
+   40, //"04 Wurly  "
+   65, //"05 DX7    "
+   73, //"06 Clavi  "
+  114, //"07 Vibes  "
+   33, //"08 Harmoni"
+  112,  //"09 Miles  "
+    5, //"10 Drums  "
+    5, //"11 Jump   "
+   79, //"12 Oohs   "
+  100, //"13 Bass   "
+  118, //"14 Squeeze"
+   79, //"15 Whistle"
+  106, //"16 Banjo  "
+  };
   delay(2000);
   lcd.clear();
   lcd.write(5);
@@ -324,7 +366,8 @@ void displayVolumeMessage(int midiVolume) {
 /* See this expanded function to get a better understanding of the
  * meanings of the four possible (pinA, pinB) value pairs:
  */
-void doEncoder_Expanded(){
+void doEncoder(){
+  delay(4);
   if (digitalRead(encoder0PinA) == HIGH) {   // found a low-to-high on channel A
     if (digitalRead(encoder0PinB) == LOW) {  // check channel B to see which way
       // encoder is turning
@@ -345,6 +388,7 @@ void doEncoder_Expanded(){
     }
 
   }
+  
 }
 
 void HandleNoteOn(byte channel, byte pitch, byte velocity) {
