@@ -66,7 +66,7 @@ char* midiParameterName[] = { "Channel: ",
 
 // The sounds I have for each MIDI channel on my sound module
 char* midiChannelMessages[] = {
-  "MIDI Babel Fish 0.79",
+  "MIDI Babel Fish 0.82",
   "01 Grand  ",
   "02 Hammond",
   "03 Rhodes ",
@@ -89,7 +89,7 @@ char* midiChannelMessages[] = {
 //{ 0, 8, 3, 59, 40, 65, 73, 114, 33, 112, 5, 5, 79, 100, 118, 79, 106 };
 
 // Values for Roland SonicCell
-byte mProg[] = {
+byte mProg[17] = {
     0, // nothing
     8, //"01 Grand  "
     3, //"02 Hammond"
@@ -110,7 +110,7 @@ byte mProg[] = {
   };
 
 // Individual volume level for each channel
-byte mVol[] = {
+byte mVol[17] = {
     0, // nothing
   100, //"01 Grand  "
   100, //"02 Hammond"
@@ -192,7 +192,7 @@ void loop() {
   Pos = encoder0Pos;
   SREG = oldSREG;
   // The rotary encoder has turned
-  if(Pos != oldPos) HandleEncoderTurn();
+  if (Pos != oldPos) HandleEncoderTurn();
   // The button changed since last loop
   if (buttonPressed != buttonLast) HandleButtonPress();
   // Turn the back light off after timeout
@@ -253,6 +253,7 @@ void HandleEncoderTurn() {
         }
         displayChannelMessage(midiChannel);
         displayProgramMessage(midiProgram[midiChannel]);
+        displayVolumeMessage(midiVolume[midiChannel]);
         break;
       case 1: // Program
         if (Pos > oldPos) { // turning clockwise
@@ -370,7 +371,7 @@ void displayVolumeMessage(int midiVolume) {
   lcd.setCursor(1, 2);
   lcd.print(midiParameterName[2]);
   lcd.print(midiVolume);
-  lcd.print(" ");
+  lcd.print("  ");
 }
 
 
@@ -383,23 +384,17 @@ void doEncoder(){
     if (digitalRead(encoder0PinB) == LOW) {  // check channel B to see which way
       // encoder is turning
       encoder0Pos = encoder0Pos - 1;         // CCW
-    } 
-    else {
+    } else {
       encoder0Pos = encoder0Pos + 1;         // CW
     }
-  }
-  else                                        // found a high-to-low on channel A
-  { 
+  } else {                                   // found a high-to-low on channel A
     if (digitalRead(encoder0PinB) == LOW) {   // check channel B to see which way
       // encoder is turning  
       encoder0Pos = encoder0Pos + 1;          // CW
-    } 
-    else {
+    } else {
       encoder0Pos = encoder0Pos - 1;          // CCW
     }
-
   }
-  
 }
 
 void HandleNoteOn(byte channel, byte pitch, byte velocity) {
