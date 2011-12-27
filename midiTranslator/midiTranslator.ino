@@ -40,6 +40,8 @@
 #define LCD_ROWS 4 // Number of rows on the LCD
 #define MIDI_PANIC_TIME 1500 // How long a button press to invoke the MIDI panic
 #define RESET_BUTTON_TIME 5000 // How long the button has been pressed to initiate a reset
+#define RX 0
+#define TX 1
 
 #define encoder0PinA 2  // The rotary encoder is attached to pins 2 and 4
 #define encoder0PinB 4  // and ground of course
@@ -66,7 +68,7 @@ char* midiParameterName[] = { "Channel: ",
 
 // The sounds I have for each MIDI channel on my sound module
 char* midiChannelMessages[] = {
-  "MIDI Babel Fish 0.82",
+  "MIDI Babel Fish 0.83",
   "01 Grand  ",
   "02 Hammond",
   "03 Rhodes ",
@@ -152,6 +154,9 @@ void setup() {
   digitalWrite(encoder0PinA, HIGH);
   pinMode(encoder0PinB, INPUT);
   digitalWrite(encoder0PinB, HIGH);
+  pinMode(TX, OUTPUT);
+  digitalWrite(RX, HIGH);
+  pinMode(RX, INPUT);
 
   // Set up the rotary encoder
   attachInterrupt(0, doEncoder, CHANGE); // encoder pin on interrupt 0 (pin 2)
@@ -163,7 +168,8 @@ void setup() {
   // Initiate MIDI communications, listen to all channels, turn off thru mode
   MIDI.begin(MIDI_CHANNEL_OMNI);
   // By default, the MIDI library sends everything THRU. We do NOT want that! 
-  MIDI.turnThruOff();
+  // Either call MIDI.turnThruOff(); in your setup or
+  //    #define COMPILE_MIDI_THRU 0 in the library's MIDI.h
 
   // Connect MIDI status changes involving a channel to handlers
   MIDI.setHandleNoteOn(HandleNoteOn);
