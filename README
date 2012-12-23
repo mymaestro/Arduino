@@ -1,1 +1,4 @@
+PulseSensorAmped_Arduino_1dot2 is modified code for PulseSensor
+SAA1064 library for I2C controlling 4x 7-segment common-anode LEDs
 The MIDI translator takes input from MIDI device attached to RX and outputs MIDI attached to TX
+pulseMonitorPCD8544 takes input from PulseSensor and displays on Nokia 5110 LCD
