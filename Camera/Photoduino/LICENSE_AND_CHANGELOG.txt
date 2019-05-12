@@ -1,0 +1,78 @@
+/**
+ * - Photoduino
+ * - http://code.google.com/p/photoduino/
+ *
+ * This file is part of Photoduino.
+ *
+ * Photoduino is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Photoduino is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Photoduino.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * Changelog:
+ *
+ *
+ * v0.9 
+ *   - Added new "Mirror lockup" funtionality in all sensor modes
+ *   - Added new "Numeric mode" for tunning sensor limit with more precision. 
+ *   - Added compatibility with ArduinoMega by "#define BOARD_ARDUINO_MEGA".
+ *   - Default interval time is now 1 second instead 1000 miliseconds because 
+ *     is more common used.
+ *   - Added a compile value to define the pulse width for shooting the flash.
+ *   - Some other minor fixes and code reviews.  
+ *
+ * v0.8 (last revision compatible with atmega168)
+ *   - Bug fixed on some cameras like canon 50d with prebulb yes. 
+ *
+ * v0.7 
+ *   - Bug fixed on shutterEnd with prebulb yes. 
+ * 
+ * v0.6 
+ *   - New mode "Flash slave" uses the LDR sensor to shoot the flashes like a 
+ *     slave flash.
+ *   - Now all text messages are defines to make posible the i18n. 
+ *     Current available languages are spanish and english
+ *   - Fixed a bug with cicles on intervalmode
+ *
+ * v0.5 
+ *   - Now each sensor have a run mode and custom config
+ *   - New parameter "cicles" also on sensor trigger modes
+ *   - New parameter "intercicle time" added on sensor trigger modes for wait
+ *     between cicles to let the camera time to process the photo or avoid shoots
+ *     by noise on sensors.
+ *   - Removed all "exit" options from menus to reduce code size and simplify. 
+ *     Use hold-A-button to exit.
+ *   - Added power on/off control of a laser connected to the RESERVED port. 
+ *     Laser is set power-off before open the camera shutter.
+ *   - Re-organization of .pde files
+ *   - Many code improvements to reduce code size and enhace the organization
+ *
+ * v0.4
+ *   - Keyboard reading is completly re-writed code to enhace control and use 
+ *     debounce and hold time
+ *   - Revision of code comments
+ *   - added reference of default shutterlag times for canon DSLR cameras
+ *   - (function setSensorLimit) now uses two buttons for up and down the value
+ * 
+ * v0.3
+ *   - (function setIntValue) Bug fixed when sets numeric values higher than 59999 
+ *   - (function setIntValue) Numeric values now uses two buttons for up and down 
+ *   - (function setIntValue) Now shows the measure units
+ *   - (PINS_BTN_A and PINS_BTN_B) Interchanged to be the same reference in silkscreen
+ *   - (function keyScan) Bug fixed
+ *
+ * v0.2
+ *   - New file organization
+ *   - Various improvements
+ *   - Configuration backup on eeprom
+ *
+ */
