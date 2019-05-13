@@ -1,0 +1,11 @@
+	This library was inspired by and derived from "johnboiles" (it seems) 
+	PCInt Arduino Playground example here: http://www.arduino.cc/playground/Main/PcInt
+	If you are the original author, please let us know at the google code page
+	
+	It provides an extension to the interrupt support for arduino by
+	adding pin change interrupts, giving a way for users to have
+	interrupts drive off of any pin.
+
+	Please make any configuration changes in the accompanying PinChangeIntConfig.h file.
+	This will help avoid having to reset your config in the event of changes to the 
+	library code (just don't replace that file when you update).

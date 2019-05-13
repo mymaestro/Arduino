@@ -1,0 +1,28 @@
+#######################################
+# Syntax Coloring Map For xobxob
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+XOBXOB_Ethernet	KEYWORD1
+FSON	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+connect	KEYWORD2
+connected	KEYWORD2
+requestXOB	KEYWORD2
+updateXOB	KEYWORD2
+initResponse	KEYWORD2
+loadStreamedResponse	KEYWORD2
+stop	KEYWORD2
+getProperty	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

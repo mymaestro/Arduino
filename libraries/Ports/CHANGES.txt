@@ -1,0 +1,182 @@
+This change log is no longer maintained as a separate file. You can now browse
+all the source code and see all the changes and comments ever made on the web.
+
+The home page for this library, including its automatic change log, is:
+	http://jeelabs.net/projects/cafe/repository/show/Ports
+
+To check out the latest version, use subversion:
+	svn co svn://svn.jeelabs.org/jeelabs/trunk/libraries/Ports
+	
+For more information about subversion and source code from JeeLabs, see:
+	http://jeelabs.org/2010/12/15/subversion/
+	
+--------------------------------------------------------------------------------
+
+2010-11 jcw
+
+* Add dcmotor_demo.pde example for the DC Motor Plug.
+* Add anaWrite3() to support PWM on the the IRQ pin.
+* Reduce power consumption of the indoor.pde sketch.
+* Added glcdSpectrum.pde with FFT code.
+* Update dimmer_demo, forgot to check it in.
+* Added new glcdClock.pde, glcdScope.pde, and glcdTracer.pde demo sketches.
+* Added new toneGen.pde demo sketch to demonstrate a discrete 8-bit DAC.
+* Added LuxPlug::setGain() (see http://talk.jeelabs.net/topic/608).
+* Added new indoor.pde sketch for the Graphics Board.
+* Added new glcd_demo.pde sketch for the Graphics Board.
+* Added ir_repeater.pde demo sketch, fix bug in the InfraredPlug::send() code.
+* Added IR packet decoder to InfraredPlug class.
+* Added analog_demo.pde (as suggested here: http://talk.jeelabs.net/topic/593).
+
+2010-10 jcw
+
+* Updated opto\_demo.pde sketch for new input/output v2 board.
+* Avoid compile errors with older Arduino IDE releases (thx to Robert H).
+* Added an ALL_ON state for Blink::buttonCheck().
+* Added HeadingBoard class and heading_demo.pde sketch.
+* Condense this change log a bit.
+* Added ProximityPlug class and proximity_demo.pde sketch.
+* Added InputParser class and parser_demo.pde sketch.
+* Don't use BODSE if it's not available, e.g. on ATMega168.
+* Fix logic so watchdog interrupts can be distinguished from other interrupts.
+* Added Scheduler::pollWaiting() for low-power scheduling.
+* Added Scheduler class and schedule.pde demo (no low-power code yet).
+* Added support for pin-change interrupts plus an ir_recv_irq.pde sketch for it.
+* Fix start pulse decoding, result now always odd number of nibbles (or max).
+* Added Infrared Class and ir_recv.pde sample sketch
+
+2010-09 jcw
+
+* Added new opto_demo.pde sketch for the Opto-coupler Plug.
+
+2010-08 jcw
+
+* Added new "Sleepy" low-power utility class. Taken from RF12's "radioBlip".
+* Solved the brown-out disable via software in power_down sketch.
+* Add button_demo.pde example to demonstrate new BlinkPlug::buttonCheck() code.
+* Added powerdown_demo sketch.
+* Fixed incorrect ADC power down in sleep mode (it wasn't!).
+* Added relay_demo sketch.
+* Forgot to sign-extend the Gravity Plug sensor results.
+
+2010-06 jcw
+
+* Improved bmp085demo power saving on startup.
+* Use new sync mode sending in bmp085demo.
+* Add some power-saving features to the bmp085demo sketch.
+* Extend InputPlug class to support plugs with an incorrect ATtiny45 fuse.
+* Added snapNikon.pde example.
+
+2010-05 jcw
+
+* Added new isp\_repair.pde sketch, adapted from the isp\_prepare sketch.
+* Several fixes and improvements for the MemoryStream class.
+* Finally solved the isp\_capture issues (it was partly due to avrdude issues).
+* Added new bmp085recv.pde example to report packets from bmp085demo.
+* BMP085 demo extended to also broadcast all readings over wireless.
+* Added support for all 4 resolutions in BMP085 pressure sensors.
+* Slightly longer pulse times in isp_capture, to avoid programming failures.
+* Ignore fuse read results in playback mode, as they depend on prior settings.
+* Added version number 3 to RF12demo, i.e. report as "[RF12demo.3]".
+
+2010-04 jcw
+
+* Fixed the RF12.h requirement wherever Ports.h is used in the sample sketches.
+* Added flashing LED in isp_capture.pde to indicate successful programming.
+* Added isp_capture.pde demo sketch, for use with the Flash Board.
+* Added InputPlug class and input_demo example sketch.
+* Added isp\_flash and isp\_prepare example sketches, for use with the ISP plug.
+
+2010-03 jcw
+
+* Added magnetometer access, but it's not working properly / predictably yet.
+* Added new HeadingPlug class and heading_demo example sketch.
+* Added new GravityPlug class and gravity_demo example sketch.
+* Added new SMDdemo sketch, as pre-loaded on the JeeSMD kit ATmega's.
+* Added new DimmerPlug class and dimmer_demo example sketch.
+* Added new LuxPlug class and lux_demo example sketch.
+* Support hardware I2C pins via software-based PortI2C, using pseudo port "0".
+
+2010-02 jcw
+
+* Replaced PCA8574A with MCP23008 code, as used on the Expander Plug.
+* Adjusted comment in PortsBMP085.cpp to explain change to b3 calculation.
+
+2010-01 jcw
+
+* Added backlight() and noBacklight() to LiquidCrystalI2C for LCD Plug.
+* Simplified and removed some duplicate code.
+
+2009-12 jcw
+
+* Added static mode3(), digiRead3(), and digiWrite3() to access the IRQ pin.
+* Added rx buffering in UartPlug to support higher baudrates without data loss.
+* Added options delayFun are to SHT11::measure to support low-power uses.
+* Added UartPlug class, and updated the uart_demo example sketch.
+* Added memory_demo example for the MemoryPlug and MemoryStream classes.
+* Added BlinkPlug, MemoryPlug, and MemoryStream classes.
+* Added a "isPresent()" member to the DeviceI2C class.
+* Added blink_demo example using the new BlinkPlug class.
+* Added a "remaining()" member to the MilliTimer class.
+* Added a "setAddress()" member to the DeviceI2C class.
+
+2009-11 jcw
+
+* Added the "output_stepper" demo, using an Output Plug with I2C.
+* Forgot to check in thermo_demo and lcd_demo examples - fixed.
+* Added include <RF12.h> to avoid linker problems in bmp085demo and exxpander.
+
+2009-10 jcw
+
+* Added PortsLCD.h and PortsLCD.cpp with LiquidCrystalLCD class, and lcd_demo.
+* Fix blink_recv demo, node 0 is special now (used for OOK), changed to 'A'.
+* Added MilliTimer class and code to the Ports library.
+* Added "uart_demo", uses SC16IS740 via I2C as extra serial port.
+
+2009-09 jcw
+
+* Added <RF12.h> include to eemem demo to avoid a linker problem :(
+* Added "rtc_demo", connects to the DS1307 real-time clock.
+
+2009-07 jcw
+
+* Added "eemem" and "expander" demos, both using I2C.
+
+2009-06 jcw
+
+* Adjust calculation constants for SHT11 sensor to latest docs.
+
+2009-05 jcw
+
+* Change BMP085 API a bit to better support low-power readouts.
+* BMP085 changes confirmed to work properly above 25C.
+* Fix remote ports to support other freq's than 868 MHz, with fixed blink demo.
+* Added $Id comment lines to all source files so filenames are shown in files.
+
+2009-02 jcw
+
+* Added dcf77demo with decoding logic for the DCF clock signal from Frankfurt.
+* Added recv433demo for separate OOK receiver with a KlikAanKlikUit decoder.
+* Added SparkFun TSL230 light sensor demo (frequency output).
+* Add frequency band spec to rf12_initialize() call due to change in RF12.
+* Added shiftRead() and replaced shift() by more general shiftWrite().
+* Added Parallax HM55B compass module demo (this runs on a 5V Arduino).
+* Added Parallax H48C 3-axis accelerometer demo (this runs on a 5V Arduino).
+* Added I2C support via new PortI2C class. Uses bit-banging, master mode only.
+* Added DeviceI2C class to support multiple I2C devices on a single port.
+* Added BMP085 pressure sensor support with "bmt085demo" example sketch.
+* Added very simple demo of digital and analog IO with "pir_demo" sketch.
+* Added demo for the Nintendo "Nunchuk" controller, which is an I2C device.
+* Added "combi_demo" which merges 4 other demos, all running in parallel.
+* Added pulse() and pulse2() methods to the Port class, to call pulseIn().
+* Added shift() method to the Port class, to call shiftOut().
+* Added "qti_demo" interfacing to the Parallax QTI sensor #27401.
+* Added "accel2125_demo" interfacing to the Parallax accelerometer #28017.
+* Subversion repository moved to Google code.
+* New SHT11 humidity sensor support with "sht11demo" example sketch.
+* New RemotePort class plus PortsRF12.cpp interface for the RF12 radio.
+  Also added RemoteNode and RemoteHandler classes to separate responsibilities.
+* Added "blink_xmit" and "blink_recv" example sketches to demonstrate
+  a simple case of continuously sending packets to update remote ports.
+* The digiPin(), digiPin2(), and anaPin() members are now protected.
+* Public release on 2009-02-13.
