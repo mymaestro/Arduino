@@ -142,6 +142,7 @@ void setup() {
 
   //debug..
   dbgprint( "Starting ESP32-TickerTape running on CPU %d at %d MHz.  Version %s.  Free memory %d", xPortGetCoreID(), ESP.getCpuFreqMHz(), VERSION, ESP.getFreeHeap() );
+  delay(2000);
 
   LEDdisplay.BLINK();//LEDdisplay.BLINK();LEDdisplay.BLINK();  //LEDdisplay.BLINK();LEDdisplay.BLINK();
 
