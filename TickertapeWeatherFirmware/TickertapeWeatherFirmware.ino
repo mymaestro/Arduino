@@ -119,7 +119,6 @@ void saveConfigCallback () {
 void setup() {
   //ResetDevice();//Uncomment this and upload to have the device in a mode where it will erase the onboard memory (SSID + PASSWORD) on reboot. Comment and reupload to get the normal operation back
 
-
   //init strings to empty
   Brightness[0]   = 0;
   WelcomeText[0]  = 0;
@@ -168,11 +167,14 @@ void setup() {
         if (json.success()) {
           Serial.println("\nparsed json");
 
-          strcpy(Brightness, json["Brightness"]  );
-          strcpy(WelcomeText, json["WelcomeText"]);
+          //strcpy(Brightness, json["Brightness"]  );
+          strcpy(Brightness, "15");
+          //strcpy(WelcomeText, json["WelcomeText"]);
+          strcpy(WelcomeText, "Welcome to Austin");
           strcpy(apiKey, json["apiKey"]          );
           strcpy(apiLocation, json["apiLocation"]);
-          strcpy(charTimezone, json["charTimezone"]);
+          //strcpy(charTimezone, json["charTimezone"]);
+          strcpy(charTimezone, "-5");
         } else {
           dbgprint("failed to load json config");
         }
