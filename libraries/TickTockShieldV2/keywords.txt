@@ -1,0 +1,76 @@
+#######################################
+# Syntax Coloring Map for Tick Tock Shield
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TTSTime	KEYWORD1
+TTSButton	KEYWORD1
+TTSBuzzer	KEYWORD1
+TTSDisplay	KEYWORD1
+TTSLed	KEYWORD1
+TTSLight	KEYWORD1
+TTSTemp	KEYWORD1
+
+button1	KEYWORD1
+button2	KEYWORD1
+button3	KEYWORD1
+button4	KEYWORD1
+
+but1	KEYWORD1
+but2	KEYWORD1
+but3	KEYWORD1
+but4	KEYWORD1
+
+led1	KEYWORD1
+led2	KEYWORD1
+led3	KEYWORD1
+led4	KEYWORD1
+
+light	KEYWORD1
+time	KEYWORD1
+
+buzzer	KEYWORD1
+buz	KEYWORD1
+
+temp	KEYWORD1
+
+disp	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setTime	KEYWORD2
+getTime	KEYWORD2
+getHour	KEYWORD2
+getMin	KEYWORD2
+getSec	KEYWORD2
+get	KEYWORD2
+pressed	KEYWORD2
+released	KEYWORD2
+on	KEYWORD2
+off	KEYWORD2
+state	KEYWORD2
+display	KEYWORD2
+num	KEYWORD2
+time	KEYWORD2
+clear	KEYWORD2
+pointOn	KEYWORD2
+pointOff	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+TTSK1	LITERAL1
+TTSK2	LITERAL1
+TTSK3	LITERAL1
+TTSLED1	LITERAL1
+TTSLED2	LITERAL1
+TTSLED3	LITERAL1
+TTSLED4	LITERAL1
+uchar	LITERAL1
