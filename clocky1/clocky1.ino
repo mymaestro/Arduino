@@ -1,3 +1,7 @@
+/*
+  Display the current time on the TM1636
+*/
+
 #include "Wire.h"
 #include <TTSDisplay.h>
 TTSDisplay rtcshield;
@@ -20,7 +24,7 @@ void setup() {
   Serial.begin(9600);
   // set the initial time here:
   // DS3231 seconds, minutes, hours, day, date, month, year
-  // setDS3231time(30,41,22,1,27,10,19);
+  // setDS3231time(00,19,21,2,11,11,19);
   rtcshield.clear();
   rtcshield.pointOn();
 }
