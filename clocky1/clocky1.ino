@@ -23,13 +23,13 @@ void setup() {
   Wire.begin();
   Serial.begin(9600);
   // set the initial time here:
-  // DS3231 seconds, minutes, hours, day, date, month, year
-  // setDS3231time(00,19,21,2,11,11,19);
+  // DS3231 seconds, minutes, hours, day-of-week (1=Sunday), date, month, year
+  //setDS3231time(0,19,2,6,20,12,19);
   rtcshield.clear();
   rtcshield.pointOn();
 }
 
-void setDS3231time(byte second, byte minute, byte hour, byte dayOfWeek, byte dayOfMonth, byte month, byte year) {
+void setDS3231time(byte second, byte minute, byte hour, byte dayOfWeek, byte monthDay, byte month, byte year) {
   // sets time and date data to DS3231
   Wire.beginTransmission(DS3231_I2C_ADDRESS);
   Wire.write(0); // set next input to start at the seconds register
@@ -37,13 +37,13 @@ void setDS3231time(byte second, byte minute, byte hour, byte dayOfWeek, byte day
   Wire.write(decToBcd(minute)); // set minutes
   Wire.write(decToBcd(hour)); // set hours
   Wire.write(decToBcd(dayOfWeek)); // set day of week (1=Sunday, 7=Saturday)
-  Wire.write(decToBcd(dayOfMonth)); // set date (1 to 31)
+  Wire.write(decToBcd(monthDay)); // set date (1 to 31)
   Wire.write(decToBcd(month)); // set month
   Wire.write(decToBcd(year)); // set year (0 to 99)
   Wire.endTransmission();
 }
 
-void readDS3231time(byte *second, byte *minute, byte *hour, byte *dayOfWeek, byte *dayOfMonth, byte *month, byte *year) {
+void readDS3231time(byte *second, byte *minute, byte *hour, byte *dayOfWeek, byte *monthDay, byte *month, byte *year) {
   Wire.beginTransmission(DS3231_I2C_ADDRESS);
   Wire.write(0); // set DS3231 register pointer to 00h
   Wire.endTransmission();
@@ -53,15 +53,15 @@ void readDS3231time(byte *second, byte *minute, byte *hour, byte *dayOfWeek, byt
   *minute = bcdToDec(Wire.read());
   *hour = bcdToDec(Wire.read() & 0x3f);
   *dayOfWeek = bcdToDec(Wire.read());
-  *dayOfMonth = bcdToDec(Wire.read());
+  *monthDay = bcdToDec(Wire.read());
   *month = bcdToDec(Wire.read());
   *year = bcdToDec(Wire.read());
 }
 
 void displayTime() {
-  byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+  byte second, minute, hour, dayOfWeek, monthDay, month, year;
   // retrieve data from DS3231
-  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+  readDS3231time(&second, &minute, &hour, &dayOfWeek, &monthDay, &month, &year);
   // display on the LED
 
   rtcshield.time(hour, minute);
@@ -70,7 +70,22 @@ void displayTime() {
   } else {
     rtcshield.pointOff();
   }
+  // Start RTC drift compensation
+  if (hour == 9 && minute == 1 && second == 0) { // run daily at exactly 9:01 A.M.
+     delay(30000); // wait 30 seconds
 
+     setDS3231time(1,1,9,dayOfWeek,monthDay,month,year);
+
+  // Time drift is approx 30 seconds gain per 24 hours. The extra one second is to prevent the program from being stuck
+  // in an endless loop. Formula is time drift <in seconds> + 1 second leeway + set time to 1 min, 1 second past the hour.
+  // This will result in the clock being put back 30 seconds at 9:01:01 every morning. Adjust formula accordingly.
+  // DS3231 crystal is temperature sensitive so during the summer the gain will slow down. Colder temps = faster speeds.
+  // Often cheap Chinese modules use watch crystals which are calibrated at blood temperature not room temperature.
+  // The above code is not perfect but will help to compensate for this problem.
+  
+  }
+  // end RTC drift compensation
+  
   // send it to the serial monitor
   if (debug == true) {
     Serial.print(hour, DEC);
@@ -87,40 +102,43 @@ void displayTime() {
     }
     Serial.print(second, DEC);
     Serial.print(" ");
-    Serial.print(dayOfMonth, DEC);
-    Serial.print("/");
     Serial.print(month, DEC);
-    Serial.print("/");
+    Serial.print("-");
+    Serial.print(monthDay, DEC);
+    Serial.print("-");
+    Serial.print("20");
     Serial.print(year, DEC);
-    Serial.print(" Day of week: ");
+    Serial.print(" (");
     switch(dayOfWeek){
     case 1:
-      Serial.println("Sunday");
+      Serial.print("Sunday");
       break;
     case 2:
-      Serial.println("Monday");
+      Serial.print("Monday");
       break;
     case 3:
-      Serial.println("Tuesday");
+      Serial.print("Tuesday");
       break;
     case 4:
-      Serial.println("Wednesday");
+      Serial.print("Wednesday");
       break;
     case 5:
-      Serial.println("Thursday");
+      Serial.print("Thursday");
       break;
     case 6:
-      Serial.println("Friday");
+      Serial.print("Friday");
       break;
     case 7:
-      Serial.println("Saturday");
+      Serial.print("Saturday");
       break;
     }
+    Serial.println(")");
   }
 }
 
 void loop() {
   blink = !blink;
   displayTime(); // display the real-time clock data on the Serial Monitor,
+
   delay(1000); // every second
 }
