@@ -1,200 +1,168 @@
-/* 
+/*
  * File:   spi.cpp
  * Author: Purinda Gunasekara <purinda@gmail.com>
- * 
+ *
  * Created on 24 June 2012, 11:00 AM
- * 
+ *
+ * Patched for exception handling and selectable SPI SPEED by ldiaz 2018.
+ *
  * Inspired from spidev test in linux kernel documentation
- * www.kernel.org/doc/Documentation/spi/spidev_test.c 
+ * www.kernel.org/doc/Documentation/spi/spidev_test.c
  */
 
 #include "spi.h"
 
-#include <pthread.h>
-static pthread_mutex_t spiMutex;
+#include <fcntl.h>
+#include <linux/spi/spidev.h>
+#include <memory.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
-SPI::SPI():fd(-1) {
+#define RF24_SPIDEV_BITS 8
+
+SPI::SPI():fd(-1), _spi_speed(RF24_SPIDEV_SPEED) {
 }
 
-void SPI::begin(int busNo){
+bool spiIsInitialized = 0;
 
-	this->device = "/dev/spidev0.0";
+void SPI::begin(int busNo,uint32_t spi_speed){
+
+    if(spiIsInitialized){
+       return; 
+    }
+    
     /* set spidev accordingly to busNo like:
      * busNo = 23 -> /dev/spidev2.3
      *
      * a bit messy but simple
      * */
-    this->device[11] += (busNo / 10) % 10;
-    this->device[13] += busNo % 10;
-	this->bits = 8;
-	this->speed = RF24_SPIDEV_SPEED;
-	this->mode=0;
-    //this->mode |= SPI_NO_CS;
-	this->init();
-}
+	char device[] = "/dev/spidev0.0";
+	device[11] += (busNo / 10) % 10;
+	device[13] += busNo % 10;
 
-void SPI::init()
-{
-	int ret;
-    
-    if (this->fd < 0)  // check whether spi is already open
-    {
-	  this->fd = open(this->device.c_str(), O_RDWR);
+	if(this->fd >=0) // check whether spi is already open
+	{
+		close(this->fd);
+		this->fd=-1;
+	}
 
-      if (this->fd < 0)
-      {
+	this->fd = open(device, O_RDWR);
+  if (this->fd < 0) throw SPIException("can't open device");
+	/*
+  {
         perror("can't open device");
         abort();
-      }
-    }
 
+  }*/
+    spiIsInitialized = true;
+	init(spi_speed);
+}
+
+void SPI::init(uint32_t speed)
+{
+	uint8_t bits = RF24_SPIDEV_BITS;
+	uint8_t mode = 0;
+
+	int ret;
 	/*
 	 * spi mode
 	 */
-	ret = ioctl(this->fd, SPI_IOC_WR_MODE, &this->mode);
-	if (ret == -1)
-	{
+	ret = ioctl(this->fd, SPI_IOC_WR_MODE, &mode);
+	if (ret == -1) throw SPIException("cant set WR spi mode");
+	/*{
 		perror("can't set spi mode");
-		abort();		
-	}
+		abort();
+	}*/
 
-	ret = ioctl(this->fd, SPI_IOC_RD_MODE, &this->mode);
-	if (ret == -1)
-	{
+	ret = ioctl(this->fd, SPI_IOC_RD_MODE, &mode);
+	if (ret == -1) throw SPIException("can't set RD spi mode");
+	/*{
 		perror("can't set spi mode");
-		abort();				
-	}
-	
+		abort();
+	}*/
+
 	/*
 	 * bits per word
 	 */
-	ret = ioctl(this->fd, SPI_IOC_WR_BITS_PER_WORD, &this->bits);
-	if (ret == -1)
-	{
+	ret = ioctl(this->fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+	if (ret == -1) throw SPIException("can't set WR bits per word");
+	/*{
 		perror("can't set bits per word");
-		abort();				
-	}
+		abort();
+	}*/
 
-	ret = ioctl(this->fd, SPI_IOC_RD_BITS_PER_WORD, &this->bits);
-	if (ret == -1)
-	{
+	ret = ioctl(this->fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
+	if (ret == -1) throw SPIException("can't set RD bits per word");
+	/*{
 		perror("can't set bits per word");
-		abort();						
-	}
+		abort();
+	}*/
 	/*
 	 * max speed hz
 	 */
-	ret = ioctl(this->fd, SPI_IOC_WR_MAX_SPEED_HZ, &this->speed);
-	if (ret == -1)
-	{
+	ret = ioctl(this->fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+	if (ret == -1) throw SPIException("can't WR set max speed hz");
+	/*{
 		perror("can't set max speed hz");
-		abort();						
-	}
+		abort();
+	}*/
 
-	ret = ioctl(this->fd, SPI_IOC_RD_MAX_SPEED_HZ, &this->speed);
-	if (ret == -1)
-	{
+	ret = ioctl(this->fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
+	if (ret == -1) throw SPIException("can't RD set max speed hz");
+	/*{
 		perror("can't set max speed hz");
-		abort();						
-	}
+		abort();
+	}*/
+	_spi_speed=speed;
 }
 
-uint8_t SPI::transfer(uint8_t tx_)
+uint8_t SPI::transfer(uint8_t tx)
 {
-    pthread_mutex_lock (&spiMutex);
-	int ret;
-  	uint8_t tx[1] = {tx_};
-	uint8_t rx[1];
-     
-    this->init();
-	struct spi_ioc_transfer tr = {
-	tr.tx_buf = (unsigned long)&tx[0],
-	tr.rx_buf = (unsigned long)&rx[0],
-	tr.len = 1,//ARRAY_SIZE(tx),
-	tr.delay_usecs = 0,
-	tr.cs_change=1,
-	tr.bits_per_word = this->bits,
-	};
-	
-    tr.speed_hz = this->speed,	
-	//Note: On RPi, for some reason I started getting 'bad message' errors, and changing the struct as below fixed it, until an update...??
-	//
-	/*	// One byte is transfered at once
-
-
-	uint8_t rx[ARRAY_SIZE(tx)] = {0};
 	struct spi_ioc_transfer tr;
-	tr.tx_buf = (unsigned long)tx;
-	tr.rx_buf = (unsigned long)rx;
-	tr.len = ARRAY_SIZE(tx);
+	memset(&tr, 0, sizeof(tr));
+	tr.tx_buf = (unsigned long)&tx;
+	uint8_t rx;
+	tr.rx_buf = (unsigned long)&rx;
+	tr.len = sizeof(tx);
+	tr.speed_hz = _spi_speed; //RF24_SPIDEV_SPEED;
 	tr.delay_usecs = 0;
-	tr.cs_change = 1;
-	tr.speed_hz = this->speed;
-	tr.bits_per_word = this->bits;*/
+	tr.bits_per_word = RF24_SPIDEV_BITS;
+	tr.cs_change = 0;
 
+	int ret;
 	ret = ioctl(this->fd, SPI_IOC_MESSAGE(1), &tr);
-	if (ret < 1)
-	{
-        pthread_mutex_unlock (&spiMutex);
+	if (ret < 1) throw SPIException("can't send spi message");
+	/*{
 		perror("can't send spi message");
-		abort();		
-	}
+		abort();
+	}*/
 
-    pthread_mutex_unlock (&spiMutex);
-	return rx[0];
+	return rx;
 }
 
-//void bcm2835_spi_transfernb(char* tbuf, char* rbuf, uint32_t len)
 void SPI::transfernb(char* tbuf, char* rbuf, uint32_t len)
 {
-	
-	pthread_mutex_lock (&spiMutex);
+    struct spi_ioc_transfer tr;
+    memset(&tr, 0, sizeof(tr));
+    tr.tx_buf = (unsigned long)tbuf;
+    tr.rx_buf = (unsigned long)rbuf;
+    tr.len = len;
+    tr.speed_hz = _spi_speed; //RF24_SPIDEV_SPEED;
+    tr.delay_usecs = 0;
+    tr.bits_per_word = RF24_SPIDEV_BITS;
+    tr.cs_change = 0;
+
 	int ret;
-	this->init();
-	struct spi_ioc_transfer tr = {
-		tr.tx_buf = (unsigned long)tbuf,
-		tr.rx_buf = (unsigned long)rbuf,
-		tr.len = len,//ARRAY_SIZE(tx),
-		tr.cs_change=1,
-		tr.delay_usecs = 0,
-		tr.bits_per_word = this->bits,
-	};
-        tr.speed_hz = this->speed,    
-	
-	//Note: On RPi, for some reason I started getting 'bad message' errors, and changing the struct as below fixed it, until an update...??
-	// One byte is transfered at once
-	//uint8_t tx[] = {0};
-	//tx[0] = tx_;
-
-	//uint8_t rx[ARRAY_SIZE(tx)] = {0};
-	/*struct spi_ioc_transfer tr;
-	tr.tx_buf = (unsigned long)tbuf;//(unsigned long)tx;
-	tr.rx_buf = (unsigned long)rbuf;//(unsigned long)rx;
-	tr.len = len;//ARRAY_SIZE(tx);
-	tr.delay_usecs = 0;
-	tr.cs_change = 1;
-	tr.speed_hz = this->speed;
-	tr.bits_per_word = this->bits;*/
-
 	ret = ioctl(this->fd, SPI_IOC_MESSAGE(1), &tr);
-	if (ret < 1)
-	{
-        pthread_mutex_unlock (&spiMutex);
+	if (ret < 1) throw SPIException("can't send spi message");
+	/*{
 		perror("can't send spi message");
-		abort();		
-	}
-    pthread_mutex_unlock (&spiMutex);
-	//return rx[0];
+		abort();
+	}*/
 }
-
-void SPI::transfern(char* buf, uint32_t len)
-{
-    transfernb(buf, buf, len);
-}
-
 
 SPI::~SPI() {
-    if (!(this->fd < 0))
-	    close(this->fd);
+	if (this->fd >= 0) close(this->fd);
 }
-

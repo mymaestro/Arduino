@@ -24,6 +24,8 @@ else ifeq ($(DRIVER), RPi)
 OBJECTS+=spi.o bcm2835.o interrupt.o
 else ifeq ($(DRIVER), SPIDEV)
 OBJECTS+=spi.o gpio.o compatibility.o interrupt.o
+else ifeq ($(DRIVER), wiringPi)
+OBJECTS+=spi.o
 endif
 
 # make all
@@ -33,7 +35,7 @@ all: $(LIBNAME)
 # Make the library
 $(LIBNAME): $(OBJECTS)
 	@echo "[Linking]"
-	$(CC) $(SHARED_LINKER_FLAGS) $(CFLAGS) -o $(LIBNAME) $^
+	$(CC) $(SHARED_LINKER_FLAGS) $(CFLAGS) -o $(LIBNAME) $^ $(SHARED_LINKER_LIBS)
 
 # Library parts
 RF24.o: RF24.cpp	

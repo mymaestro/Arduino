@@ -24,7 +24,7 @@ void setup() {
   Serial.begin(9600);
   // set the initial time here:
   // DS3231 seconds, minutes, hours, day-of-week (1=Sunday), date, month, year
-  //setDS3231time(0,19,2,6,20,12,19);
+  // setDS3231time(0,51,12,4,20,12,25);
   rtcshield.clear();
   rtcshield.pointOn();
 }
@@ -72,7 +72,7 @@ void displayTime() {
   }
   // Start RTC drift compensation
   if (hour == 9 && minute == 1 && second == 0) { // run daily at exactly 9:01 A.M.
-     delay(30000); // wait 30 seconds
+     delay(60000); // wait 60 seconds
 
      setDS3231time(1,1,9,dayOfWeek,monthDay,month,year);
 
