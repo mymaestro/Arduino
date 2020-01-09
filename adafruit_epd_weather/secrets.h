@@ -12,7 +12,7 @@
 //#define OWM_LOCATION "New York,US"
 
 // update the weather at this interval, in minutes
-#define UPDATE_INTERVAL 15
+#define UPDATE_INTERVAL 17
 
 // Set to true to show temperatures in Celsius, false for Fahrenheit
 #define OWM_METRIC false

@@ -572,12 +572,12 @@ void loop() {
     timer = millis();
     int retry = 6;
     while(!wifi_connect()) {
-      delay(5000);
       retry--;
       if(retry < 0) {
         displayError("Can not connect to WiFi, press reset to restart");
         while(1);      
       }
+      delay(15000); // Wait 15 seconds before trying again
     }
     String urlc = owclient.buildUrlCurrent(OWM_KEY, OWM_LOCATION);
     Serial.println(urlc);
@@ -585,20 +585,21 @@ void loop() {
     do {
       retry--;
       wget(urlc, 80, data);
-      if (strlen(data) == 0 && retry < 0) {
-        displayError("Cannot get weather data, press reset to restart");
-        while(1);      
-      }
+      // if (strlen(data) == 0 && retry < 0) {
+      //  displayError("Cannot get weather data, press reset to restart");
+      //  while(1);      
+      //}
+      if (strlen(data) == 0 ) delay(15000); // Wait 15 seconds before trying again
     } while(strlen(data) == 0);
     Serial.print("JSON data: ");
     Serial.println(data);
     retry = 6;
     while(!owclient.updateCurrent(owcdata, data)) {
       retry--;
-      if(retry < 0) {
-        displayError(owclient.getError());
-        while(1);
-      }
+      //if(retry < 0) {
+      //  displayError(owclient.getError());
+      //  while(1);
+      //}
       delay(5000);
     }
     Serial.print("Returned observation time: "); Serial.println((unsigned long) owcdata.observationTime);
