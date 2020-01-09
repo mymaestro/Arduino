@@ -79,7 +79,7 @@ void loop()
 /* Set alarm time and feed time into Internal eeprom*/
 
 void time() {
-  int temp=1,minuts=0,hours=0,seconds=0;
+  int temp=1, minuts=0, hours=0, seconds=0;
   while (temp==1) {
     if (digitalRead(UP)==0) {
       HOUR++;
@@ -91,7 +91,7 @@ void time() {
     delay(100);
     if (digitalRead(DOWN)==0) {
       hours1=HOUR;
-      EEPROM.write(add++,hours1);
+      EEPROM.write(add++, hours1);
       temp=2;
       while(digitalRead(DOWN)==0);
     }

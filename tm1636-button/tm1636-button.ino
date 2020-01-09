@@ -6,29 +6,25 @@ void setup() {
 
   // initalise digital pins for buttons as inputs
   // and initialise internal pullups
-  pinMode(9, INPUT_PULLUP); // button K1
-  pinMode(10, INPUT_PULLUP); // button K2
-  pinMode(11, INPUT_PULLUP); // button K3
+  pinMode(9, INPUT_PULLUP); // button K1 (DOWN)
+  pinMode(10, INPUT_PULLUP); // button K2 (UP)
+  pinMode(11, INPUT_PULLUP); // button K3 (MODE)
 }
 
-void loop()
-{
-  if (digitalRead(9) == LOW)
-  {
+void loop() {
+  if (digitalRead(9) == LOW) {
     digitalWrite(2, HIGH);
     delay(10);
     digitalWrite(2, LOW);
   }
 
-  if (digitalRead(10) == LOW)
-  {
+  if (digitalRead(10) == LOW) {
     digitalWrite(3, HIGH);
     delay(10);
     digitalWrite(3, LOW);
   }
 
-  if (digitalRead(11) == LOW)
-  {
+  if (digitalRead(11) == LOW) {
     digitalWrite(4, HIGH);
     delay(10);
     digitalWrite(4, LOW);
