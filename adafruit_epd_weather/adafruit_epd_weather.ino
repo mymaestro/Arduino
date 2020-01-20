@@ -45,6 +45,9 @@ OpenWeatherMapForecastData owfdata[3];
 
 Adafruit_NeoPixel neopixel = Adafruit_NeoPixel(1, NEOPIXELPIN, NEO_GRB + NEO_KHZ800);
 
+//WiFiSSLClient client;
+WiFiClient client;
+
 // bool debug = false;
 const char *moonphasenames[29] = {
   "New Moon",
@@ -115,8 +118,7 @@ bool wifi_connect() {
 
   neopixel.setPixelColor(0, neopixel.Color(0, 0, 255));  // Set pixel blue while connecting
   neopixel.show(); 
-  if(WiFi.begin(WIFI_SSID, WIFI_PASSWORD) == WL_CONNECT_FAILED)
-  {
+  if(WiFi.begin(WIFI_SSID, WIFI_PASSWORD) == WL_CONNECT_FAILED) {
     Serial.println("WiFi connection failed!");
     displayError("WiFi connection failed!");
     return false;
@@ -153,11 +155,14 @@ void wget(String &url, int port, char *buff) {
 
 void wget(String &host, String &path, int port, char *buff) {
   //WiFiSSLClient client;
-  WiFiClient client;
+  //WiFiClient client;
 
   neopixel.setPixelColor(0, neopixel.Color(0, 0, 255));
   neopixel.show();
-  client.stop();
+
+  if (!client.connected()) {
+    client.stop();
+  }
   if (client.connect(host.c_str(), port)) {
     Serial.println("Connected to server");
     // Make a HTTP request:
@@ -171,28 +176,20 @@ void wget(String &host, String &path, int port, char *buff) {
     bool capture = false;
     int linelength = 0;
     char lastc = '\0';
-    while(true) 
-    {
+    while(true) {
       while (client.available()) {
         char c = client.read();
         //Serial.print(c);
-        if((c == '\n') && (lastc == '\r'))
-        {
-          if(linelength == 0)
-          {
+        if((c == '\n') && (lastc == '\r')) {
+          if(linelength == 0) {
             capture = true;
           }
           linelength = 0;
-        }
-        else if(capture)
-        {
+        } else if(capture) {
           buff[capturepos++] = c;
           //Serial.write(c);
-        }
-        else
-        {
-          if((c != '\n') && (c != '\r'))
-            linelength++;
+        } else {
+          if((c != '\n') && (c != '\r')) linelength++;
         }
         lastc = c;
         bytes++;
@@ -207,9 +204,7 @@ void wget(String &host, String &path, int port, char *buff) {
         break;
       }
     }
-  }
-  else
-  {
+  } else {
     Serial.println("Problem connecting to " + host + ":" + String(port));
     buff[0] = '\0';
   }

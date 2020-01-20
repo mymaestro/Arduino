@@ -48,7 +48,7 @@ byte     day;
 byte     month;
 uint16_t year;
 bool     blink    = false;
-bool     debug    = true;
+bool     debug    = false;
 
 volatile uint8_t pinChangeInterruptFlag=0;
 volatile uint8_t pinState=0;
@@ -79,10 +79,13 @@ void setup() {
     /* The following line sets the RTC to the date & time this sketch was compiled
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); */
     rtc.adjust(DateTime(__DATE__, __TIME__));
-    /* This line sets the RTC with an explicit date & time, for example to set
-    January 21, 2014 at 3am you would call: yyyy, mm, dd, hh, MM, ss
-       rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));  */
   }
+  /* Manually adjust the time:
+     This line sets the RTC with an explicit date & time, for example to set
+     January 21, 2014 at 3am you would call: yyyy, mm, dd, hh, MM, ss
+  rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));  */
+  //rtc.adjust(DateTime(2020, 1, 19, 21, 14, 0));
+  
   rtcshield.clear();
   rtcshield.pointOn();
   waiting = millis();
@@ -109,7 +112,7 @@ void displayTime() {
 
   // Start RTC drift compensation
   if (hour == 9 && minute == 1 && second == 0) { // run daily at exactly 9:01 A.M.
-    delay(90000); // wait 90 seconds
+    delay(80000); // wait 90 seconds
  // rtc.adjust(DateTime(yyyy, mm, dd, hh, MM, ss));
     rtc.adjust(DateTime(year, month, day, 9, 1, 1));
 
@@ -158,6 +161,22 @@ void displayTime() {
     Serial.println(")");
   }
 }
+
+void displaySecs() {
+  DateTime now = rtc.now();
+  hour =   now.hour();
+  minute = now.minute();
+  second = now.second();
+  year =   now.year();
+  month =  now.month();
+  dayOfTheWeek = now.dayOfTheWeek();
+  day =    now.day();
+
+  rtcshield.time(minute, second);
+  
+  ( blink ) ? rtcshield.pointOn() : rtcshield.pointOff();
+}
+
 void loop() {
   if ((millis() - waiting) >  BLINKTIME) {
      displayTime();
@@ -166,11 +185,26 @@ void loop() {
   }
   if (pinChangeInterruptFlag) {
   switch (pinChangeInterruptFlag) {
+
+    /*
     case MODE:
       if ( pinState == 0 ) {
         digitalWrite(RED1, HIGH);
         while ( pinState == 0 ) {
           beep();
+        }
+        digitalWrite(RED1, LOW);
+      } else {
+        digitalWrite(RED1, LOW);
+      }
+      break;
+    */
+    case MODE:
+      if ( pinState == 0 ) {
+        digitalWrite(RED1, HIGH);
+        while ( pinState == 0 ) {
+          displaySecs();
+          delay(250);
         }
         digitalWrite(RED1, LOW);
       } else {
