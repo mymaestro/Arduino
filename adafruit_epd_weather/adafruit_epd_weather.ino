@@ -201,7 +201,7 @@ void httpRequest(String &host, String &path, char *buff) {
         lastc = c;
         bytes++;
       }
-    
+      // to get out of the while(true) loop ---
       // if the server's disconnected, stop the client:
       if (!client.connected()) {
         Serial.println("Disconnecting from server");
@@ -600,7 +600,7 @@ void loop() {
     timer = millis();
     
     // Get current weather into data array
-    wget(urlc, 80, data);
+    wget(urlc, data);
       // if (strlen(data) == 0 && retry < 0) {
       //  displayError("Cannot get weather data, press reset to restart");
       //  while(1);      
@@ -609,7 +609,7 @@ void loop() {
     } while(strlen(data) == 0);
     Serial.print("JSON data: ");
     Serial.println(data);
-    retry = 6;
+    int retry = 6;
     while(!owclient.updateCurrent(owcdata, data)) {
       retry--;
       //if(retry < 0) {
@@ -620,7 +620,7 @@ void loop() {
     }
     Serial.print("Returned observation time: "); Serial.println((unsigned long) owcdata.observationTime);
     
-    wget(urlf, 80, data);
+    wget(urlf, data);
     Serial.println("Data retrieved:");
     Serial.println(data);
     if(!owclient.updateForecast(owfdata[0], data, 0)) {
