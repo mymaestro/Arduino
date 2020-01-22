@@ -33,8 +33,15 @@
 #define EPD_RESET           -1
 #define EPD_BUSY            -1
 #define NEOPIXELPIN         40
+#define WEBSERVICEPORT      80
 
 #define TZ_OFFSET       -21600 // America/Chicago
+
+int                 wifistatus         = WL_IDLE_STATUS;
+unsigned long       lastConnectionTime = 0;        // last time you connected to the server, in milliseconds
+int                 displayMode        = 1;  // Button A pressed
+String              urlc; // URL of current conditions
+String              urlf; // URL of forecast 
 
 // This is for the 2.7" tricolor EPD
 Adafruit_IL91874 gfx(264, 176 ,EPD_DC, EPD_RESET, EPD_CS, SRAM_CS, EPD_BUSY);
@@ -118,56 +125,56 @@ bool wifi_connect() {
 
   neopixel.setPixelColor(0, neopixel.Color(0, 0, 255));  // Set pixel blue while connecting
   neopixel.show(); 
-  if(WiFi.begin(WIFI_SSID, WIFI_PASSWORD) == WL_CONNECT_FAILED) {
-    Serial.println("WiFi connection failed!");
-    displayError("WiFi connection failed!");
-    return false;
-  }
 
   int wifitimeout = 15;
-  int wifistatus; 
-  while ((wifistatus = WiFi.status()) != WL_CONNECTED && wifitimeout > 0) {
-    delay(1000);
-    Serial.print(".");
-    wifitimeout--;
+  if (WiFi.begin(WIFI_SSID, WIFI_PASSWORD) == WL_CONNECT_FAILED) {
+    while ((wifistatus = WiFi.status()) != WL_CONNECTED && wifitimeout > 0) {
+      delay(1000);
+      Serial.print(".");
+      wifitimeout--;
+      }
   }
-  if(wifitimeout == 0) {
+  if (wifitimeout == 0) {
     Serial.println("WiFi connection timeout with error " + String(wifistatus));
     displayError("WiFi connection timeout with error " + String(wifistatus));
     neopixel.setPixelColor(0, neopixel.Color(0, 0, 0));
-    neopixel.show(); 
+    neopixel.show();
+    printWifiStatus;
     return false;
   }
   neopixel.setPixelColor(0, neopixel.Color(0, 0, 0));
   neopixel.show(); 
   Serial.println("Connected");
+  printWifiStatus;
   return true;
 }
 
-void wget(String &url, int port, char *buff) {
+void wget(String &url, char *buff) {
   int pos1 = url.indexOf("/",0);
   int pos2 = url.indexOf("/",8);
   String host = url.substring(pos1+2, pos2);
   String path = url.substring(pos2);
-  Serial.println("wget(host=" + host + ", path=" + path + ", port=" + port + ")");
-  wget(host, path, port, buff);
+  Serial.println("wget(host=" + host + ", path=" + path + ")");
+  httpRequest(host, path, buff);
 }
 
-void wget(String &host, String &path, int port, char *buff) {
+void httpRequest(String &host, String &path, char *buff) {
   //WiFiSSLClient client;
   //WiFiClient client;
 
+  // Set neoPixel blue when going online
   neopixel.setPixelColor(0, neopixel.Color(0, 0, 255));
   neopixel.show();
-
-  if (!client.connected()) {
-    client.stop();
-  }
-  if (client.connect(host.c_str(), port)) {
-    Serial.println("Connected to server");
+  
+  // Stop the client before going on
+  client.stop();
+  
+  if (client.connect(host.c_str(), WEBSERVICEPORT)) {
+    Serial.println("Connecting...");
     // Make a HTTP request:
     client.println(String("GET ") + path + String(" HTTP/1.0"));
     client.println("Host: " + host);
+    client.println("User-Agent: ArduinoWiFi/1.1");
     client.println("Connection: close");
     client.println();
 
@@ -205,7 +212,8 @@ void wget(String &host, String &path, int port, char *buff) {
       }
     }
   } else {
-    Serial.println("Problem connecting to " + host + ":" + String(port));
+    Serial.println("Problem connecting to " + host + ":" + String(WEBSERVICEPORT));
+    printWifiStatus();
     buff[0] = '\0';
   }
   neopixel.setPixelColor(0, neopixel.Color(0, 0, 0));
@@ -219,18 +227,15 @@ int getStringLength(String s) {
   return w + x;
 }
 
-/*
-The return value is percent of moon cycle ( from 0.0 to 0.999999), i.e.:
-
-0.0: New Moon
+/* The return value is percent of moon cycle ( from 0.0 to 0.999999), i.e.:
+0.0:   New Moon
 0.125: Waxing Crescent Moon
-0.25: Quarter Moon
+0.25:  Quarter Moon
 0.375: Waxing Gibbous Moon
-0.5: Full Moon
+0.5:   Full Moon
 0.625: Waning Gibbous Moon
-0.75: Last Quarter Moon
+0.75:  Last Quarter Moon
 0.875: Waning Crescent Moon
-
 */
 float getMoonPhase(time_t tdate) {
   time_t newmoonref = 1263539460; //known new moon date (2010-01-15 07:11)
@@ -240,6 +245,23 @@ float getMoonPhase(time_t tdate) {
   if(newmoonref > tdate)
   phase = 1 - phase;
   return phase;
+}
+
+void printWifiStatus() {
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your board's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
 }
 
 void displayError(String str) {
@@ -541,50 +563,49 @@ void displaySunMoon(OpenWeatherMapCurrentData &owcdata) {
   neopixel.show(); 
 }
 
+
 /* Start neoPixel and graphics display */
 void setup() {
+  // Setup neoPixel
   neopixel.begin();
   neopixel.show();
-  
+  // Setup ePaper display
   gfx.begin();
   Serial.println("ePaper display initialized");
   gfx.setRotation(2);
   gfx.setTextWrap(false);
+
+
+  // Initialize current and forecasted weather request URLs
+  urlc = owclient.buildUrlCurrent(OWM_KEY, OWM_LOCATION);
+  Serial.println(urlc);
+  urlf = owclient.buildUrlForecast(OWM_KEY, OWM_LOCATION);
+  Serial.println(urlf);
+
+  // Connect to wifi access point
+  wifi_connect();
 }
 
-void loop() {
-  char data[4000];
-  static uint32_t timer = millis();
-  static uint8_t lastbutton = 1;
-  static bool firsttime = true;
+static uint32_t timer = millis();
+static uint8_t lastbutton = 1;
+static bool firsttime = true;
+char data[4000];
 
-  int button = readButtons();
-  
+void loop() {
+  displayMode = readButtons();
   // update weather data at specified interval or when button 4 is pressed
-  if((millis() >= (timer + 1000*60*UPDATE_INTERVAL)) || (button == 4) || firsttime) {
+  if((millis() >= (timer + 1000*60*UPDATE_INTERVAL)) || (displayMode == 4) || firsttime) {
     Serial.println("Getting weather data");
     firsttime = false;
     timer = millis();
-    int retry = 6;
-    while(!wifi_connect()) {
-      retry--;
-      if(retry < 0) {
-        displayError("Can not connect to WiFi, press reset to restart");
-        while(1);      
-      }
-      delay(15000); // Wait 15 seconds before trying again
-    }
-    String urlc = owclient.buildUrlCurrent(OWM_KEY, OWM_LOCATION);
-    Serial.println(urlc);
-    retry = 6;
-    do {
-      retry--;
-      wget(urlc, 80, data);
+    
+    // Get current weather into data array
+    wget(urlc, 80, data);
       // if (strlen(data) == 0 && retry < 0) {
       //  displayError("Cannot get weather data, press reset to restart");
       //  while(1);      
       //}
-      if (strlen(data) == 0 ) delay(15000); // Wait 15 seconds before trying again
+      if (strlen(data) == 0 ) delay(60000); // Wait a minute before trying again
     } while(strlen(data) == 0);
     Serial.print("JSON data: ");
     Serial.println(data);
@@ -598,8 +619,7 @@ void loop() {
       delay(5000);
     }
     Serial.print("Returned observation time: "); Serial.println((unsigned long) owcdata.observationTime);
-    String urlf = owclient.buildUrlForecast(OWM_KEY, OWM_LOCATION);
-    Serial.println(urlf);
+    
     wget(urlf, 80, data);
     Serial.println("Data retrieved:");
     Serial.println(data);
@@ -629,29 +649,25 @@ void loop() {
     }
   }
 
-  if (button == 0) {
-    return;
-  }
+  Serial.print("Button "); Serial.print(displayMode); Serial.println(" pressed");
 
-  Serial.print("Button "); Serial.print(button); Serial.println(" pressed");
-
-  if (button == 1) {
-    displayAllWeather(owcdata,owfdata,3);
-    lastbutton = button;
-  }
-  if (button == 2) {
-    //displayForecast(owcdata,owfdata,3);
-    displayCurrentConditions(owcdata);
-    lastbutton = button;
-  }
-  if (button == 3) {
-    displaySunMoon(owcdata);
-    lastbutton = button;
+  switch(displayMode) {
+    case 0: // no button pressed
+      break;
+    case 1:
+      displayAllWeather(owcdata, owfdata, 3);
+      break;
+    case 2:
+      displayCurrentConditions(owcdata);
+      break;
+    case 3:
+      displaySunMoon(owcdata);
+      break;
+    case 4:
+      displayForecast(owcdata, owfdata, 3);
+      break;
   }
   
-  // wait until button is released
-  while (readButtons()) {
-    delay(10);
-  }
-
+  lastbutton = displayMode;
+  
 }
