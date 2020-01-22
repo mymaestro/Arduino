@@ -98,13 +98,13 @@ void isr_handler() {
 
 void displayTime() {
   DateTime now = rtc.now();
-  hour =   now.hour();
+  hour = now.hour();
   minute = now.minute();
   second = now.second();
-  year =   now.year();
-  month =  now.month();
+  year = now.year();
+  month = now.month();
   dayOfTheWeek = now.dayOfTheWeek();
-  day =    now.day();
+  day = now.day();
 
   rtcshield.time(hour, minute);
   
@@ -112,7 +112,7 @@ void displayTime() {
 
   // Start RTC drift compensation
   if (hour == 9 && minute == 1 && second == 0) { // run daily at exactly 9:01 A.M.
-    delay(80000); // wait 90 seconds
+    delay(80000); // wait 80 seconds
  // rtc.adjust(DateTime(yyyy, mm, dd, hh, MM, ss));
     rtc.adjust(DateTime(year, month, day, 9, 1, 1));
 
@@ -164,17 +164,12 @@ void displayTime() {
 
 void displaySecs() {
   DateTime now = rtc.now();
-  hour =   now.hour();
   minute = now.minute();
   second = now.second();
-  year =   now.year();
-  month =  now.month();
-  dayOfTheWeek = now.dayOfTheWeek();
-  day =    now.day();
 
   rtcshield.time(minute, second);
-  
-  ( blink ) ? rtcshield.pointOn() : rtcshield.pointOff();
+  rtcshield.pointOn();
+  // ( blink ) ? rtcshield.pointOn() : rtcshield.pointOff();
 }
 
 void loop() {
@@ -184,10 +179,9 @@ void loop() {
      waiting = millis();
   }
   if (pinChangeInterruptFlag) {
-  switch (pinChangeInterruptFlag) {
-
-    /*
-    case MODE:
+    switch (pinChangeInterruptFlag) {
+      /* Sound the alarm while the MODE button is pressed.
+      case MODE:
       if ( pinState == 0 ) {
         digitalWrite(RED1, HIGH);
         while ( pinState == 0 ) {
@@ -198,9 +192,9 @@ void loop() {
         digitalWrite(RED1, LOW);
       }
       break;
-    */
-    case MODE:
-      if ( pinState == 0 ) {
+      */
+      case MODE:
+      if ( pinState == 0 ) { // button is depressed
         digitalWrite(RED1, HIGH);
         while ( pinState == 0 ) {
           displaySecs();
@@ -211,7 +205,7 @@ void loop() {
         digitalWrite(RED1, LOW);
       }
       break;
-    case UP:
+      case UP:
       if ( pinState == 0 ) {
         digitalWrite(GREEN, HIGH);
         while ( pinState == 0 ) {
@@ -224,10 +218,11 @@ void loop() {
         digitalWrite(GREEN, LOW);
       }
       break;
-    case DOWN:
+      case DOWN:
       if ( pinState == 0 ) {
         digitalWrite(BLUE, HIGH);
         while ( pinState == 0 ) {
+          // Read temperature, convert to Fahrenheit
           DEGREES = temp.get();
           DEGREESF = DEGREES * 1.8 + 32;
           rtcshield.num(DEGREESF);
@@ -238,74 +233,11 @@ void loop() {
         digitalWrite(BLUE, LOW);
       }
       break;
-  }
-  pinChangeInterruptFlag = 0;
-  }
-
-
-
-}
-
-/* Set alarm time and feed time into Internal eeprom*/
-
-void time() {
-  int temp = 1, minuts = 0, hours = 0, seconds = 0, addr = 0;
-  while (temp == 1) {
-    if (digitalRead(UP) == 0) {
-      HOUR++;
-      if (HOUR == 24) HOUR = 0;
-      while (digitalRead(UP) == 0);
     }
-    rtcshield.clear();
-    rtcshield.time(HOUR, MINUT);
-    delay(100);
-    if (digitalRead(DOWN) == 0) {
-      hours = HOUR;
-      EEPROM.write(addr++, hours);
-      temp = 2;
-      while (digitalRead(DOWN) == 0);
-    }
-  }
-  while (temp == 2) {
-    if (digitalRead(UP) == 0) {
-      MINUT++;
-      if (MINUT == 60) MINUT = 0;
-      while (digitalRead(UP) == 0);
-    }
-    //rtcshield.clear();
-    rtcshield.time(HOUR, MINUT);
-    delay(100);
-    if (digitalRead(UP) == 0) {
-      minuts = MINUT;
-      EEPROM.write(addr++, minuts);
-      temp = 0;
-      while (digitalRead(UP) == 0);
-    }
-  }
-  delay(1000);
-}
-
-/* Function to chack medication time */
-
-void match() {
-  int tem[17];
-  for (int i = 11; i < 17; i++) {
-    tem[i] = EEPROM.read(i);
-  }
-  if (HOUR == tem[11] && MINUT == tem[12]) {
-    beep();
-    beep();
-    beep();
-    beep();
-    beep();
-    beep();
-    beep();
-    beep();
+    pinChangeInterruptFlag = 0;
   }
 }
-
-/* function to buzzer indication */
-
+// Sound the buzzer
 void beep() {
   digitalWrite(BUZZER, HIGH);
   delay(500);
