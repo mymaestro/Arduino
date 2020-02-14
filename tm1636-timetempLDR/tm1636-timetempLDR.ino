@@ -112,7 +112,7 @@ void displayTime() {
 
   // Start RTC drift compensation
   if (hour == 9 && minute == 1 && second == 0) { // run daily at exactly 9:01 A.M.
-    delay(80000); // wait 80 seconds
+    delay(80500); // wait 80 seconds
  // rtc.adjust(DateTime(yyyy, mm, dd, hh, MM, ss));
     rtc.adjust(DateTime(year, month, day, 9, 1, 1));
 
