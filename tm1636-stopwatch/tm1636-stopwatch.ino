@@ -49,6 +49,7 @@ byte     dayOfTheWeek;
 byte     day;
 byte     month;
 byte     DISPLAYMODE;
+byte     OLDDISPLAYMODE;
 uint16_t year;
 bool     blink      = false;
 bool     debug      = false;
@@ -93,6 +94,7 @@ void setup() {
   rtcshield.pointOn();
   waiting = millis();
   DISPLAYMODE = 0;
+  OLDDISPLAYMODE = 1;
 }
 
 void isr_handler() {
@@ -102,16 +104,20 @@ void isr_handler() {
 
 void displayTime() {
   DateTime now = rtc.now();
-  hour = now.hour();
-  minute = now.minute();
-  second = now.second();
-  year = now.year();
-  month = now.month();
+          hour = now.hour();
+        minute = now.minute();
+        second = now.second();
+          year = now.year();
+         month = now.month();
   dayOfTheWeek = now.dayOfTheWeek();
-  day = now.day();
+           day = now.day();
 
   rtcshield.time(hour, minute);
-  
+
+  if ((millis() - waiting) >  BLINKTIME) {
+     blink = !blink;
+     waiting = millis();
+  }  
   ( blink ) ? rtcshield.pointOn() : rtcshield.pointOff();
 
   // Start RTC drift compensation
@@ -176,6 +182,11 @@ void displaySecs() {
   // ( blink ) ? rtcshield.pointOn() : rtcshield.pointOff();
 }
 
+void stopWatch() {
+  DateTime now = rtc.now();
+  //while ();
+}
+
 // Sound the buzzer
 void beep() {
   digitalWrite(BUZZER, HIGH);
@@ -184,85 +195,83 @@ void beep() {
   delay(500);
 }
 
+// Display the light sensor
+
+void displayLDR() {
+  LDR = analogRead(A1); // show value on display
+  rtcshield.num(LDR);
+  delay(250);
+}
+
+// display the temperature
+
+void displayTemperature() {
+  DEGREES = temp.get();
+  DEGREESF = DEGREES * 1.8 + 32;
+  rtcshield.num(DEGREESF);
+  delay(250);
+}
+
 void loop() {
   switch (DISPLAYMODE) {
     case DISPLAYTIME:
       Serial.println("Time display mode:");
+      if (DISPLAYMODE != OLDDISPLAYMODE) {
+        digitalWrite(GREEN, LOW);
+        digitalWrite(RED1, HIGH);
+        digitalWrite(RED2, LOW);
+        digitalWrite(BLUE, LOW);
+        OLDDISPLAYMODE = DISPLAYMODE;
+      }
       displayTime();
       break;
     case DISPLAYSTOPWATCH:
       Serial.println("Stopwatch:");
+      if (DISPLAYMODE != OLDDISPLAYMODE) {
+        digitalWrite(GREEN, LOW);
+        digitalWrite(RED1, LOW);
+        digitalWrite(RED2, HIGH);
+        digitalWrite(BLUE, LOW);
+        OLDDISPLAYMODE = DISPLAYMODE;
+      }
       beep();
       break;
     case DISPLAYTEMP:
-      Serial.prinln("Temperature:");
-      beep();
+      Serial.println("Temperature:");
+      if (DISPLAYMODE != OLDDISPLAYMODE) {
+        digitalWrite(GREEN, LOW);
+        digitalWrite(RED1, LOW);
+        digitalWrite(RED2, LOW);
+        digitalWrite(BLUE, HIGH);
+        OLDDISPLAYMODE = DISPLAYMODE;
+      }
+
+      displayTemperature();
       break;
     case DISPLAYLIGHT:
       Serial.println("Lumens:");
-      beep();
+      if (DISPLAYMODE != OLDDISPLAYMODE) {
+        digitalWrite(GREEN, HIGH);
+        digitalWrite(RED1, LOW);
+        digitalWrite(RED2, LOW);
+        digitalWrite(BLUE, LOW);
+        OLDDISPLAYMODE = DISPLAYMODE;
+      }
+
+      displayLDR();
       break;
-  }
-  if ((millis() - waiting) >  BLINKTIME) {
-     displayTime();
-     blink = !blink;
-     waiting = millis();
   }
   if (pinChangeInterruptFlag) {
     switch (pinChangeInterruptFlag) {
-      /* Sound the alarm while the MODE button is pressed.
       case MODE:
-      if ( pinState == 0 ) {
-        digitalWrite(RED1, HIGH);
-        while ( pinState == 0 ) {
-          beep();
-        }
-        digitalWrite(RED1, LOW);
-      } else {
-        digitalWrite(RED1, LOW);
-      }
-      break;
-      */
-      case MODE:
-      if ( pinState == 0 ) { // button is depressed
-        digitalWrite(RED1, HIGH);
-        while ( pinState == 0 ) {
-          displaySecs();
-          delay(250);
-        }
-        digitalWrite(RED1, LOW);
-      } else {
-        digitalWrite(RED1, LOW);
-      }
-      break;
+        DISPLAYMODE = (DISPLAYMODE++ % 3);
+        break;
       case UP:
-      if ( pinState == 0 ) {
-        digitalWrite(GREEN, HIGH);
-        while ( pinState == 0 ) {
-          LDR = analogRead(A1); // show value on display
-          rtcshield.num(LDR);
-          delay(250);
-        }
-        digitalWrite(GREEN, LOW);
-      } else {
-        digitalWrite(GREEN, LOW);
-      }
-      break;
+
+        break;
       case DOWN:
-      if ( pinState == 0 ) {
-        digitalWrite(BLUE, HIGH);
-        while ( pinState == 0 ) {
-          // Read temperature, convert to Fahrenheit
-          DEGREES = temp.get();
-          DEGREESF = DEGREES * 1.8 + 32;
-          rtcshield.num(DEGREESF);
-          delay(250);
-        }
-        digitalWrite(BLUE, LOW);
-      } else {
-        digitalWrite(BLUE, LOW);
-      }
-      break;
+
+        break;
     }
     pinChangeInterruptFlag = 0;
   }
