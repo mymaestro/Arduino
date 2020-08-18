@@ -31,14 +31,20 @@
 #include "BearSSLClient.h"
 
 BearSSLClient::BearSSLClient(Client& client) :
-  BearSSLClient(client, TAs, TAs_NUM)
+  BearSSLClient(&client, TAs, TAs_NUM)
 {
 }
 
-BearSSLClient::BearSSLClient(Client& client, const br_x509_trust_anchor* myTAs, int myNumTAs) :
-  _client(&client),
+BearSSLClient::BearSSLClient(Client& client, const br_x509_trust_anchor* myTAs, int myNumTAs)
+: BearSSLClient(&client, myTAs, myNumTAs)
+{
+}
+
+BearSSLClient::BearSSLClient(Client* client, const br_x509_trust_anchor* myTAs, int myNumTAs) :
+  _client(client),
   _TAs(myTAs),
-  _numTAs(myNumTAs)
+  _numTAs(myNumTAs),
+  _noSNI(false)
 {
   _ecKey.curve = 0;
   _ecKey.x = NULL;
@@ -72,7 +78,7 @@ int BearSSLClient::connect(const char* host, uint16_t port)
     return 0;
   }
 
-  return connectSSL(host);
+  return connectSSL(_noSNI ? NULL : host);
 }
 
 size_t BearSSLClient::write(uint8_t b)
@@ -178,6 +184,14 @@ BearSSLClient::operator bool()
   return (*_client);  
 }
 
+void BearSSLClient::setInsecure(SNI insecure)
+{
+  switch (insecure) {
+    case SNI::Insecure : _noSNI = true; break;
+    default: _noSNI = false;
+  }
+}
+
 void BearSSLClient::setEccSlot(int ecc508KeySlot, const byte cert[], int certLength)
 {
   // HACK: put the key slot info. in the br_ec_private_key structure
@@ -248,8 +262,7 @@ int BearSSLClient::connectSSL(const char* host)
   // initialize client context with all algorithms and hardcoded trust anchors
   br_ssl_client_init_full(&_sc, &_xc, _TAs, _numTAs);
 
-  // set the buffer in split mode
-  br_ssl_engine_set_buffer(&_sc.eng, _iobuf, sizeof(_iobuf), 1);
+  br_ssl_engine_set_buffers_bidi(&_sc.eng, _ibuf, sizeof(_ibuf), _obuf, sizeof(_obuf));
 
   // inject entropy in engine
   unsigned char entropy[32];

@@ -28,18 +28,18 @@
 
     /** System defines */
 
-    /** The size of the main buffer. This is the user-cache, where incoming data is stored.
-     * Data is stored using Frames: Header (8-bytes) + Frame_Size (2-bytes) + Data (?-bytes)
-     * 
-     * @note The MAX_PAYLOAD_SIZE is (MAIN_BUFFER_SIZE - 10), and the result must be divisible by 24.
-     */
-    #define MAIN_BUFFER_SIZE 144 + 10
-
-    /** Maximum size of fragmented network frames and fragmentation cache. This MUST BE divisible by 24.
-    * @note: Must be a multiple of 24.
+    /** Maximum size of fragmented network frames and fragmentation cache. 
+    *
+    * @note: This buffer can now be any size > 24. Previously need to be a multiple of 24.
     * @note: If used with RF24Ethernet, this value is used to set the buffer sizes.
     */
-    #define MAX_PAYLOAD_SIZE  MAIN_BUFFER_SIZE-10
+    #define MAX_PAYLOAD_SIZE  144
+    
+    /** The size of the main buffer. This is the user-cache, where incoming data is stored.
+     * Data is stored using Frames: Header (8-bytes) + Frame_Size (2-bytes) + Data (?-bytes)
+     */
+    #define MAIN_BUFFER_SIZE (MAX_PAYLOAD_SIZE + FRAME_HEADER_SIZE)
+
 
     /** Disable user payloads. Saves memory when used with RF24Ethernet or software that uses external data.*/
     //#define DISABLE_USER_PAYLOADS 
@@ -63,7 +63,8 @@
     //#define DUAL_HEAD_RADIO
     //#define ENABLE_SLEEP_MODE  //AVR only
     #define RF24NetworkMulticast
-    #define MAIN_BUFFER_SIZE 96 + 10
+    #define MAX_PAYLOAD_SIZE 72
+    #define MAIN_BUFFER_SIZE (MAX_PAYLOAD_SIZE + FRAME_HEADER_SIZE)
     #define DISABLE_FRAGMENTATION
     // Enable MAX PAYLOAD SIZE if enabling fragmentation
     //#define MAX_PAYLOAD_SIZE  MAIN_BUFFER_SIZE-10
@@ -88,7 +89,9 @@
 #endif
 
   #if !defined (ARDUINO_ARCH_AVR)
-    #define sprintf_P sprintf    
+    #ifndef sprintf_P
+      #define sprintf_P sprintf
+    #endif    
   #endif
   
     #if defined (SERIAL_DEBUG_MINIMAL)

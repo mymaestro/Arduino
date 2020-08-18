@@ -21,7 +21,7 @@
 #ifndef WiFi_h
 #define WiFi_h
 
-#define WIFI_FIRMWARE_LATEST_VERSION "1.2.1"
+#define WIFI_FIRMWARE_LATEST_VERSION "1.4.0"
 
 #include <inttypes.h>
 
@@ -34,6 +34,7 @@ extern "C" {
 #include "WiFiClient.h"
 #include "WiFiSSLClient.h"
 #include "WiFiServer.h"
+#include "WiFiStorage.h"
 
 class WiFiClass
 {

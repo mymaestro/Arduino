@@ -61,9 +61,10 @@ enum {
   MQTT_CLIENT_RX_STATE_DISCARD_PUBLISH_PAYLOAD
 };
 
-MqttClient::MqttClient(Client& client) :
-  _client(&client),
+MqttClient::MqttClient(Client* client) :
+  _client(client),
   _onMessage(NULL),
+  _cleanSession(true),
   _keepAliveInterval(60 * 1000L),
   _connectionTimeout(30 * 1000L),
   _connectError(MQTT_SUCCESS),
@@ -79,6 +80,11 @@ MqttClient::MqttClient(Client& client) :
   _willFlags(0x00)
 {
   setTimeout(0);
+}
+
+MqttClient::MqttClient(Client& client) : MqttClient(&client)
+{
+
 }
 
 MqttClient::~MqttClient()
@@ -772,6 +778,11 @@ void MqttClient::setUsernamePassword(const String& username, const String& passw
   _password = password;
 }
 
+void MqttClient::setCleanSession(bool cleanSession)
+{
+  _cleanSession = cleanSession;
+}
+
 void MqttClient::setKeepAliveInterval(unsigned long interval)
 {
   _keepAliveInterval = interval;
@@ -855,7 +866,10 @@ int MqttClient::connect(IPAddress ip, const char* host, uint16_t port)
   }
 
   flags |= _willFlags;
-  flags |= 0x02; // clean session
+
+  if (_cleanSession) {
+    flags |= 0x02; // clean session
+  }
 
   connectVariableHeader.protocolName.length = htons(sizeof(connectVariableHeader.protocolName.value));
   memcpy(connectVariableHeader.protocolName.value, "MQTT", sizeof(connectVariableHeader.protocolName.value));
@@ -1135,7 +1149,9 @@ int MqttClient::clientPeek()
 size_t MqttClient::clientWrite(const uint8_t *buf, size_t size)
 {
 #ifdef MQTT_CLIENT_DEBUG
-  Serial.print("TX: ");
+  Serial.print("TX[");
+  Serial.print(size);
+  Serial.print("]: ");
   for (size_t i = 0; i < size; i++) {
     uint8_t b = buf[i];
 

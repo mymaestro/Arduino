@@ -16,7 +16,13 @@
 */
 
 #include <ArduinoMqttClient.h>
-#include <WiFiNINA.h> // for MKR1000 change to: #include <WiFi101.h>
+#if defined(ARDUINO_SAMD_MKRWIFI1010) || defined(ARDUINO_SAMD_NANO_33_IOT) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
+  #include <WiFiNINA.h>
+#elif defined(ARDUINO_SAMD_MKR1000)
+  #include <WiFi101.h>
+#elif defined(ARDUINO_ESP8266_ESP12)
+  #include <ESP8266WiFi.h>
+#endif
 
 #include "arduino_secrets.h"
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
@@ -68,6 +74,10 @@ void setup() {
 
   // You can provide a username and password for authentication
   // mqttClient.setUsernamePassword("username", "password");
+
+  // By default the library connects with the "clean session" flag set,
+  // you can disable this behaviour by using
+  // mqttClient.setCleanSession(false);
 
   // set a will message, used by the broker when the connection dies unexpectantly
   // you must know the size of the message before hand, and it must be set before connecting

@@ -63,7 +63,7 @@ function die {
 
 function detect_machine {
     local cpu=$(execute_check "uname -m 2>/dev/null")
-    local machine=$(execute_check "cat /sys/firmware/devicetree/base/model 2>/dev/null")
+    local machine=$(execute_check "cat -v /sys/firmware/devicetree/base/model 2>/dev/null")
     local hardware=$(execute_check "grep sunxi_platform /sys/class/sunxi_info/sys_info 2>/dev/null | sed 's/^.*: \(.*\)$/\1/'")
     if [ -z "$hardware" ]; then
         local hardware=$(execute_check "grep Hardware /proc/cpuinfo 2>/dev/null | sed 's/^.*: \(.*\)$/\1/'")
@@ -148,7 +148,7 @@ function gcc_cpu_flags {
     local soc=$1
     case $soc in
     BCM2835)
-        flags="-march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard"
+        flags="-marm -march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard"
         ;;
     BCM2836)
         flags="-march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard"

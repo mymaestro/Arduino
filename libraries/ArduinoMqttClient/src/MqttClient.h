@@ -34,8 +34,13 @@
 
 class MqttClient : public Client {
 public:
+  MqttClient(Client* client);
   MqttClient(Client& client);
   virtual ~MqttClient();
+
+
+  inline void setClient(Client& client) { _client = &client; }
+
 
   void onMessage(void(*)(int));
 
@@ -67,7 +72,9 @@ public:
   // from Client
   virtual int connect(IPAddress ip, uint16_t port = 1883);
   virtual int connect(const char *host, uint16_t port = 1883);
-  virtual int connect(const IPAddress& ip, uint16_t port) { }; /* ESP8266 core defines this pure virtual in Client.h */
+#ifdef ESP8266
+  virtual int connect(const IPAddress& ip, uint16_t port) { return 0; }; /* ESP8266 core defines this pure virtual in Client.h */
+#endif
   virtual size_t write(uint8_t);
   virtual size_t write(const uint8_t *buf, size_t size);
   virtual int available();
@@ -85,14 +92,17 @@ public:
   void setUsernamePassword(const char* username, const char* password);
   void setUsernamePassword(const String& username, const String& password);
 
+  void setCleanSession(bool cleanSession);
+
   void setKeepAliveInterval(unsigned long interval);
   void setConnectionTimeout(unsigned long timeout);
 
   int connectError() const;
   int subscribeQoS() const;
-  virtual bool flush(unsigned int maxWaitMs) { } /* ESP8266 core defines this pure virtual in Client.h */
-
-  virtual bool stop(unsigned int maxWaitMs)  { } /* ESP8266 core defines this pure virtual in Client.h */
+#ifdef ESP8266
+  virtual bool flush(unsigned int /*maxWaitMs*/) { flush(); return true; } /* ESP8266 core defines this pure virtual in Client.h */
+  virtual bool stop(unsigned int /*maxWaitMs*/)  { stop(); return true; } /* ESP8266 core defines this pure virtual in Client.h */
+#endif
 
 private:
   int connect(IPAddress ip, const char* host, uint16_t port);
@@ -128,6 +138,7 @@ private:
   String _id;
   String _username;
   String _password;
+  bool _cleanSession;
 
   unsigned long _keepAliveInterval;
   unsigned long _connectionTimeout;

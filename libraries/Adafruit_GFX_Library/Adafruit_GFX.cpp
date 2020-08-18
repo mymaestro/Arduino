@@ -1364,8 +1364,9 @@ void Adafruit_GFX::setFont(const GFXfont *f) {
     @param    maxy  Maximum clipping value for Y
 */
 /**************************************************************************/
-void Adafruit_GFX::charBounds(char c, int16_t *x, int16_t *y, int16_t *minx,
-                              int16_t *miny, int16_t *maxx, int16_t *maxy) {
+void Adafruit_GFX::charBounds(unsigned char c, int16_t *x, int16_t *y,
+                              int16_t *minx, int16_t *miny, int16_t *maxx,
+                              int16_t *maxy) {
 
   if (gfxFont) {
 
@@ -1528,7 +1529,7 @@ void Adafruit_GFX::getTextBounds(const __FlashStringHelper *str, int16_t x,
     @param   i  True if you want to invert, false to make 'normal'
 */
 /**************************************************************************/
-void Adafruit_GFX::invertDisplay(boolean i) {
+void Adafruit_GFX::invertDisplay(bool i) {
   // Do nothing, must be subclassed if supported by hardware
 }
 
@@ -1660,7 +1661,7 @@ void Adafruit_GFX_Button::initButtonUL(Adafruit_GFX *gfx, int16_t x1,
    'pressed'
 */
 /**************************************************************************/
-void Adafruit_GFX_Button::drawButton(boolean inverted) {
+void Adafruit_GFX_Button::drawButton(bool inverted) {
   uint16_t fill, outline, text;
 
   if (!inverted) {
@@ -1693,7 +1694,7 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
     @returns  True if within button graphics outline
 */
 /**************************************************************************/
-boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
+bool Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
   return ((x >= _x1) && (x < (int16_t)(_x1 + _w)) && (y >= _y1) &&
           (y < (int16_t)(_y1 + _h)));
 }
@@ -1704,7 +1705,7 @@ boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
    @returns  True if was not-pressed before, now is.
 */
 /**************************************************************************/
-boolean Adafruit_GFX_Button::justPressed() { return (currstate && !laststate); }
+bool Adafruit_GFX_Button::justPressed() { return (currstate && !laststate); }
 
 /**************************************************************************/
 /*!
@@ -1712,9 +1713,7 @@ boolean Adafruit_GFX_Button::justPressed() { return (currstate && !laststate); }
    @returns  True if was pressed before, now is not.
 */
 /**************************************************************************/
-boolean Adafruit_GFX_Button::justReleased() {
-  return (!currstate && laststate);
-}
+bool Adafruit_GFX_Button::justReleased() { return (!currstate && laststate); }
 
 // -------------------------------------------------------------------------
 
@@ -1734,6 +1733,14 @@ boolean Adafruit_GFX_Button::justReleased() {
 // per pixel (no scanline pad), and GFXcanvas16 uses 2 bytes per pixel (no
 // scanline pad).
 // NOT EXTENSIVELY TESTED YET.  MAY CONTAIN WORST BUGS KNOWN TO HUMANKIND.
+
+#ifdef __AVR__
+// Bitmask tables of 0x80>>X and ~(0x80>>X), because X>>Y is slow on AVR
+const uint8_t PROGMEM GFXcanvas1::GFXsetBit[] = {0x80, 0x40, 0x20, 0x10,
+                                                 0x08, 0x04, 0x02, 0x01};
+const uint8_t PROGMEM GFXcanvas1::GFXclrBit[] = {0x7F, 0xBF, 0xDF, 0xEF,
+                                                 0xF7, 0xFB, 0xFD, 0xFE};
+#endif
 
 /**************************************************************************/
 /*!
@@ -1764,18 +1771,10 @@ GFXcanvas1::~GFXcanvas1(void) {
     @brief  Draw a pixel to the canvas framebuffer
     @param  x     x coordinate
     @param  y     y coordinate
-    @param  color 16-bit 5-6-5 Color to fill with
+    @param  color Binary (on or off) color to fill with
 */
 /**************************************************************************/
 void GFXcanvas1::drawPixel(int16_t x, int16_t y, uint16_t color) {
-#ifdef __AVR__
-  // Bitmask tables of 0x80>>X and ~(0x80>>X), because X>>Y is slow on AVR
-  static const uint8_t PROGMEM GFXsetBit[] = {0x80, 0x40, 0x20, 0x10,
-                                              0x08, 0x04, 0x02, 0x01},
-                               GFXclrBit[] = {0x7F, 0xBF, 0xDF, 0xEF,
-                                              0xF7, 0xFB, 0xFD, 0xFE};
-#endif
-
   if (buffer) {
     if ((x < 0) || (y < 0) || (x >= _width) || (y >= _height))
       return;
@@ -1813,10 +1812,67 @@ void GFXcanvas1::drawPixel(int16_t x, int16_t y, uint16_t color) {
   }
 }
 
+/**********************************************************************/
+/*!
+        @brief    Get the pixel color value at a given coordinate
+        @param    x   x coordinate
+        @param    y   y coordinate
+        @returns  The desired pixel's binary color value, either 0x1 (on) or 0x0
+   (off)
+*/
+/**********************************************************************/
+bool GFXcanvas1::getPixel(int16_t x, int16_t y) const {
+  int16_t t;
+  switch (rotation) {
+  case 1:
+    t = x;
+    x = WIDTH - 1 - y;
+    y = t;
+    break;
+  case 2:
+    x = WIDTH - 1 - x;
+    y = HEIGHT - 1 - y;
+    break;
+  case 3:
+    t = x;
+    x = y;
+    y = HEIGHT - 1 - t;
+    break;
+  }
+  return getRawPixel(x, y);
+}
+
+/**********************************************************************/
+/*!
+        @brief    Get the pixel color value at a given, unrotated coordinate.
+              This method is intended for hardware drivers to get pixel value
+              in physical coordinates.
+        @param    x   x coordinate
+        @param    y   y coordinate
+        @returns  The desired pixel's binary color value, either 0x1 (on) or 0x0
+   (off)
+*/
+/**********************************************************************/
+bool GFXcanvas1::getRawPixel(int16_t x, int16_t y) const {
+  if ((x < 0) || (y < 0) || (x >= WIDTH) || (y >= HEIGHT))
+    return 0;
+  if (this->getBuffer()) {
+    uint8_t *buffer = this->getBuffer();
+    uint8_t *ptr = &buffer[(x / 8) + y * ((WIDTH + 7) / 8)];
+
+#ifdef __AVR__
+    return ((*ptr) & pgm_read_byte(&GFXsetBit[x & 7])) != 0;
+#else
+    return ((*ptr) & (0x80 >> (x & 7))) != 0;
+#endif
+  }
+  return 0;
+}
+
 /**************************************************************************/
 /*!
     @brief  Fill the framebuffer completely with one color
-    @param  color 16-bit 5-6-5 Color to fill with
+    @param  color Binary (on or off) color to fill with
 */
 /**************************************************************************/
 void GFXcanvas1::fillScreen(uint16_t color) {
@@ -1855,7 +1911,7 @@ GFXcanvas8::~GFXcanvas8(void) {
     @brief  Draw a pixel to the canvas framebuffer
     @param  x   x coordinate
     @param  y   y coordinate
-    @param  color 16-bit 5-6-5 Color to fill with
+    @param  color 8-bit Color to fill with. Only lower byte of uint16_t is used.
 */
 /**************************************************************************/
 void GFXcanvas8::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -1885,10 +1941,58 @@ void GFXcanvas8::drawPixel(int16_t x, int16_t y, uint16_t color) {
   }
 }
 
+/**********************************************************************/
+/*!
+        @brief    Get the pixel color value at a given coordinate
+        @param    x   x coordinate
+        @param    y   y coordinate
+        @returns  The desired pixel's 8-bit color value
+*/
+/**********************************************************************/
+uint8_t GFXcanvas8::getPixel(int16_t x, int16_t y) const {
+  int16_t t;
+  switch (rotation) {
+  case 1:
+    t = x;
+    x = WIDTH - 1 - y;
+    y = t;
+    break;
+  case 2:
+    x = WIDTH - 1 - x;
+    y = HEIGHT - 1 - y;
+    break;
+  case 3:
+    t = x;
+    x = y;
+    y = HEIGHT - 1 - t;
+    break;
+  }
+  return getRawPixel(x, y);
+}
+
+/**********************************************************************/
+/*!
+        @brief    Get the pixel color value at a given, unrotated coordinate.
+              This method is intended for hardware drivers to get pixel value
+              in physical coordinates.
+        @param    x   x coordinate
+        @param    y   y coordinate
+        @returns  The desired pixel's 8-bit color value
+*/
+/**********************************************************************/
+uint8_t GFXcanvas8::getRawPixel(int16_t x, int16_t y) const {
+  if ((x < 0) || (y < 0) || (x >= WIDTH) || (y >= HEIGHT))
+    return 0;
+  if (buffer) {
+    return buffer[x + y * WIDTH];
+  }
+  return 0;
+}
+
 /**************************************************************************/
 /*!
     @brief  Fill the framebuffer completely with one color
-    @param  color 16-bit 5-6-5 Color to fill with
+    @param  color 8-bit Color to fill with. Only lower byte of uint16_t is used.
 */
 /**************************************************************************/
 void GFXcanvas8::fillScreen(uint16_t color) {
@@ -1992,6 +2096,54 @@ void GFXcanvas16::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
     buffer[x + y * WIDTH] = color;
   }
+}
+
+/**********************************************************************/
+/*!
+        @brief    Get the pixel color value at a given coordinate
+        @param    x   x coordinate
+        @param    y   y coordinate
+        @returns  The desired pixel's 16-bit 5-6-5 color value
+*/
+/**********************************************************************/
+uint16_t GFXcanvas16::getPixel(int16_t x, int16_t y) const {
+  int16_t t;
+  switch (rotation) {
+  case 1:
+    t = x;
+    x = WIDTH - 1 - y;
+    y = t;
+    break;
+  case 2:
+    x = WIDTH - 1 - x;
+    y = HEIGHT - 1 - y;
+    break;
+  case 3:
+    t = x;
+    x = y;
+    y = HEIGHT - 1 - t;
+    break;
+  }
+  return getRawPixel(x, y);
+}
+
+/**********************************************************************/
+/*!
+        @brief    Get the pixel color value at a given, unrotated coordinate.
+              This method is intended for hardware drivers to get pixel value
+              in physical coordinates.
+        @param    x   x coordinate
+        @param    y   y coordinate
+        @returns  The desired pixel's 16-bit 5-6-5 color value
+*/
+/**********************************************************************/
+uint16_t GFXcanvas16::getRawPixel(int16_t x, int16_t y) const {
+  if ((x < 0) || (y < 0) || (x >= WIDTH) || (y >= HEIGHT))
+    return 0;
+  if (buffer) {
+    return buffer[x + y * WIDTH];
+  }
+  return 0;
 }
 
 /**************************************************************************/
