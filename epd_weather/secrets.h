@@ -6,7 +6,7 @@
 #define WIFI_SSID "fishred"
 #define WIFI_PASSWORD "mymaestro11135"
 
-#define OWM_KEY "e0388b904819f96b7db1c9b5c2a99e76"
+#define OWM_KEY "MY_OPENWEATHER_API_KEY"
 #define OWM_LOCATION "Austin,US"
 //example
 //#define OWM_LOCATION "New York,US"
