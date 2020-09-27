@@ -100,9 +100,9 @@ int _graphHeight = 96;
 const int PULSE_INPUT      = A0;
 const int PULSE_BLINK      = 13;   // Pin 13 is the on-board LED Blinks an LED at each beat
 const int PULSE_FADE       = 6; // Do fancy classy fading blink at each beat
-const int MIN_ANALOG_INPUT = 325;
-const int MAX_ANALOG_INPUT = 750;
-const int THRESHOLD        = 550;  // Adjust this number to avoid noise when idle
+const int MIN_ANALOG_INPUT = 0;
+const int MAX_ANALOG_INPUT = 1024;
+const int THRESHOLD        = 650;  // Adjust this number to avoid noise when idle
 const int DELAY_LOOP_MS    = 5;    // change to slow down how often to read and graph value
 
 /*
@@ -166,7 +166,7 @@ void setup()
   if (_drawStatusBar)
   {
     //_graphHeight = SCREEN_HEIGHT - 10;
-    _graphHeight = SCREEN_HEIGHT;
+    _graphHeight = SCREEN_HEIGHT - 10;
   }
 }
 
