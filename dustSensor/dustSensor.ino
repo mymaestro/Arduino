@@ -106,10 +106,15 @@ void loop()                     // run over and over again
 
     float latest_dust = latest_reading * (VOLTAGE / 1023.0);
     float average_dust = average_reading * (VOLTAGE/ 1023.0);
-
+  /* For text to the serial console
     Serial.print("Latest Dust Reading (V): ");
     Serial.print(latest_dust);
     Serial.print("\t\tAverage Dust Reading (V): ");
+    Serial.println(average_dust);
+    */
+    /* For data for the Serial plotter */
+    Serial.print(latest_dust);
+    Serial.print("\t");
     Serial.println(average_dust);
   }
 }
