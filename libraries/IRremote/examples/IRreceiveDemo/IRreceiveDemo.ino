@@ -1,5 +1,5 @@
 /*
- * IRremote: IRrecvDemo - demonstrates receiving IR codes with IRrecv
+ * IRremote: IRreceiveDemo - demonstrates receiving IR codes with IRrecv
  * An IR detector/demodulator must be connected to the input RECV_PIN.
  * Version 0.1 July, 2009
  * Copyright 2009 Ken Shirriff
@@ -10,12 +10,12 @@
 
 #if defined(ESP32)
 int IR_RECEIVE_PIN = 15;
+#elif defined(ARDUINO_AVR_PROMICRO)
+int IR_RECEIVE_PIN = 10;
 #else
 int IR_RECEIVE_PIN = 11;
 #endif
-IRrecv irrecv(IR_RECEIVE_PIN);
-
-decode_results results;
+IRrecv IrReceiver(IR_RECEIVE_PIN);
 
 // On the Zero and others we switch explicitly to SerialUSB
 #if defined(ARDUINO_ARCH_SAMD)
@@ -26,11 +26,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     Serial.begin(115200);
-#if defined(__AVR_ATmega32U4__)
-    while (!Serial)
-        ; //delay for Leonardo, but this loops forever for Maple Serial
-#endif
-#if defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)
+#if defined(__AVR_ATmega32U4__) || defined(SERIAL_USB) || defined(SERIAL_PORT_USBVIRTUAL)
     delay(2000); // To be able to connect Serial monitor after reset and before first printout
 #endif
     // Just to know which program is running on my Arduino
@@ -39,16 +35,19 @@ void setup() {
     // In case the interrupt driver crashes on setup, give a clue
     // to the user what's going on.
     Serial.println("Enabling IRin");
-    irrecv.enableIRIn(); // Start the receiver
+    IrReceiver.enableIRIn();  // Start the receiver
+    IrReceiver.blink13(true); // Enable feedback LED
 
     Serial.print(F("Ready to receive IR signals at pin "));
     Serial.println(IR_RECEIVE_PIN);
 }
 
 void loop() {
-    if (irrecv.decode(&results)) {
-        Serial.println(results.value, HEX);
-        irrecv.resume(); // Receive the next value
+    if (IrReceiver.decode()) {
+        IrReceiver.printResultShort(&Serial);
+        Serial.println();
+
+        IrReceiver.resume(); // Receive the next value
     }
     delay(100);
 }

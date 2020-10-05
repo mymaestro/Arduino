@@ -115,14 +115,15 @@ void TimerOne::attachInterrupt(void (*isr)(), long microseconds)
   if(microseconds > 0) setPeriod(microseconds);
   isrCallback = isr;                                       // register the user's callback with the real ISR
   TIMSK1 = _BV(TOIE1);                                     // sets the timer overflow interrupt enable bit
-	// AR - remove sei() - might be running with interrupts disabled (eg inside an ISR), so leave unchanged
-//  sei();                                                   // ensures that interrupts are globally enabled
-  resume();
+	// might be running with interrupts disabled (eg inside an ISR), so don't touch the global state
+//  sei();
+  resume();												
 }
 
 void TimerOne::detachInterrupt()
 {
   TIMSK1 &= ~_BV(TOIE1);                                   // clears the timer overflow interrupt enable bit 
+															// timer continues to count without calling the isr
 }
 
 void TimerOne::resume()				// AR suggested
@@ -146,7 +147,7 @@ void TimerOne::start()	// AR addition, renamed by Lex to reflect it's actual rol
   cli();						// AR - Disable interrupts
   TCNT1 = 0;                	
   SREG = oldSREG;          		// AR - Restore status register
-
+	resume();
   do {	// Nothing -- wait until timer moved on from zero - otherwise get a phantom interrupt
 	oldSREG = SREG;
 	cli();
