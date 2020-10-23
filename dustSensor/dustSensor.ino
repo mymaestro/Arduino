@@ -7,6 +7,7 @@ A0:     A/D:                     Dust Sensor Analog Signal
 D2:     INT0 I/P:                Dust Sensor Interrupt - Link to D9
 D9:     Timer 1 OC1A PWM O/P:    Dust Sensor Samples - Link to D2
 D10:    Timer 1 OC1B PWM O/P:    Dust Sensor LED Pulses
+LED Power: 5V to device pin 1 through a 150ohm resistor
 */
 
 #define VOLTAGE 5.0 // Arduino supply voltage
@@ -106,15 +107,19 @@ void loop()                     // run over and over again
 
     float latest_dust = latest_reading * (VOLTAGE / 1023.0);
     float average_dust = average_reading * (VOLTAGE/ 1023.0);
-  /* For text to the serial console
-    Serial.print("Latest Dust Reading (V): ");
+  /* For text to the serial console */
+    Serial.print("TIMER1: ");
+    Serial.print("Voltage: ");
     Serial.print(latest_dust);
-    Serial.print("\t\tAverage Dust Reading (V): ");
+    Serial.print("\t - Latest reading: ");
+    Serial.print(latest_reading);
+    Serial.print("\tAverage Dust Reading (V): ");
     Serial.println(average_dust);
-    */
-    /* For data for the Serial plotter */
+    
+    /* For data for the Serial plotter
     Serial.print(latest_dust);
     Serial.print("\t");
     Serial.println(average_dust);
+     */
   }
 }
