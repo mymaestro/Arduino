@@ -3,8 +3,8 @@
 // secrets.h
 // Define your WIFI and OpenWeatherMap API key and location in this file
 
-#define WIFI_SSID "fishred"
-#define WIFI_PASSWORD "mymaestro11135"
+#define WIFI_SSID "your_ssid"
+#define WIFI_PASSWORD "your_wifi_password"
 
 #define OWM_KEY "MY_OPENWEATHER_API_KEY"
 #define OWM_LOCATION "Austin,US"

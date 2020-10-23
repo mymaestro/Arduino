@@ -38,8 +38,8 @@
 #define TZ_OFFSET       -21600 // America/Chicago
 
 int                 wifistatus         = WL_IDLE_STATUS;
-unsigned long       lastConnectionTime = 0;        // last time you connected to the server, in milliseconds
-int                 displayMode        = 1;  // Button A pressed
+unsigned long       lastConnectionTime = 0; // last time you connected to the server, in milliseconds
+int                 displayMode        = 1; // Button A pressed
 String              urlc; // URL of current conditions
 String              urlf; // URL of forecast 
 
