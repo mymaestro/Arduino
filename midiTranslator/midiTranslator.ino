@@ -33,19 +33,19 @@
 #include <LiquidCrystal.h>
 #include <LcdBarGraph.h>
 
-#define STATUS_LED 13 // LED pin on Arduino board
-#define BACKLIGHT_CONTROL 6 // LCD backlight wired through a 2N2222 to this pin
-#define POWERSAVE 15000 // How many milliseconds to keep the backlight on
-#define LCD_COLUMNS 20 // Number of columns on the LCD
-#define LCD_ROWS 4 // Number of rows on the LCD
-#define MIDI_PANIC_TIME 1500 // How long a button press to invoke the MIDI panic
-#define RESET_BUTTON_TIME 5000 // How long the button has been pressed to initiate a reset
-#define RX 0
-#define TX 1
+#define STATUS_LED         13    // LED pin on Arduino board
+#define BACKLIGHT_CONTROL  6     // LCD backlight wired through a 2N2222 to this pin
+#define POWERSAVE          15000 // How many milliseconds to keep the backlight on
+#define LCD_COLUMNS        20    // Number of columns on the LCD
+#define LCD_ROWS           4     // Number of rows on the LCD
+#define MIDI_PANIC_TIME    1500  // How long a button press to invoke the MIDI panic
+#define RESET_BUTTON_TIME  5000  // How long the button has been pressed to initiate a reset
+#define RX                 0
+#define TX                 1
 
-#define encoder0PinA 2  // The rotary encoder is attached to pins 2 and 4
-#define encoder0PinB 4  // and ground of course
-const int buttonPin = 3; // My encoder has a pushbutton; it's attached to pin 3
+#define encoder0PinA       2     // The rotary encoder is attached to pins 2 and 4
+#define encoder0PinB       4     // and ground of course
+const int buttonPin      = 3;    // My encoder has a pushbutton; it's attached to pin 3
 
 int Pos, oldPos;
 volatile unsigned int encoder0Pos = 0; // variables changed within interrupts are volatile
@@ -55,7 +55,7 @@ long buttonDown;
 long buttonPressTime;
 long powerSave;
 
-int notesOn = 0; // How many notes are on
+int  notesOn = 0; // How many notes are on
 // Draw an eighth note on the LCD
 byte quaver[8] = { 0x02, 0x02, 0x03, 0x02, 0x02, 0x0E, 0x1E, 0x0C };
 
@@ -447,6 +447,3 @@ void HandleAfterTouchChannel(byte channel, byte pressure) {
 void HandlePitchBend(byte channel, int bend) {
   MIDI.sendPitchBend (bend, midiChannel);
 }
-
-
-

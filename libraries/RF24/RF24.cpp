@@ -472,33 +472,33 @@ uint8_t RF24::getPayloadSize(void)
 
 #if !defined(MINIMAL)
 
-static const char rf24_datarate_e_str_0[] PROGMEM = "1MBPS";
-static const char rf24_datarate_e_str_1[] PROGMEM = "2MBPS";
-static const char rf24_datarate_e_str_2[] PROGMEM = "250KBPS";
-static const char * const rf24_datarate_e_str_P[] PROGMEM = {
+static const PROGMEM char rf24_datarate_e_str_0[] = "1MBPS";
+static const PROGMEM char rf24_datarate_e_str_1[] = "2MBPS";
+static const PROGMEM char rf24_datarate_e_str_2[] = "250KBPS";
+static const PROGMEM char * const rf24_datarate_e_str_P[] = {
   rf24_datarate_e_str_0,
   rf24_datarate_e_str_1,
   rf24_datarate_e_str_2,
 };
-static const char rf24_model_e_str_0[] PROGMEM = "nRF24L01";
-static const char rf24_model_e_str_1[] PROGMEM = "nRF24L01+";
-static const char * const rf24_model_e_str_P[] PROGMEM = {
+static const PROGMEM char rf24_model_e_str_0[] = "nRF24L01";
+static const PROGMEM char rf24_model_e_str_1[] = "nRF24L01+";
+static const PROGMEM char * const rf24_model_e_str_P[] = {
   rf24_model_e_str_0,
   rf24_model_e_str_1,
 };
-static const char rf24_crclength_e_str_0[] PROGMEM = "Disabled";
-static const char rf24_crclength_e_str_1[] PROGMEM = "8 bits";
-static const char rf24_crclength_e_str_2[] PROGMEM = "16 bits" ;
-static const char * const rf24_crclength_e_str_P[] PROGMEM = {
+static const PROGMEM char rf24_crclength_e_str_0[] = "Disabled";
+static const PROGMEM char rf24_crclength_e_str_1[] = "8 bits";
+static const PROGMEM char rf24_crclength_e_str_2[] = "16 bits" ;
+static const PROGMEM char * const rf24_crclength_e_str_P[] = {
   rf24_crclength_e_str_0,
   rf24_crclength_e_str_1,
   rf24_crclength_e_str_2,
 };
-static const char rf24_pa_dbm_e_str_0[] PROGMEM = "PA_MIN";
-static const char rf24_pa_dbm_e_str_1[] PROGMEM = "PA_LOW";
-static const char rf24_pa_dbm_e_str_2[] PROGMEM = "PA_HIGH";
-static const char rf24_pa_dbm_e_str_3[] PROGMEM = "PA_MAX";
-static const char * const rf24_pa_dbm_e_str_P[] PROGMEM = {
+static const PROGMEM char rf24_pa_dbm_e_str_0[] = "PA_MIN";
+static const PROGMEM char rf24_pa_dbm_e_str_1[] = "PA_LOW";
+static const PROGMEM char rf24_pa_dbm_e_str_2[] = "PA_HIGH";
+static const PROGMEM char rf24_pa_dbm_e_str_3[] = "PA_MAX";
+static const PROGMEM char * const rf24_pa_dbm_e_str_P[] = {
   rf24_pa_dbm_e_str_0,
   rf24_pa_dbm_e_str_1,
   rf24_pa_dbm_e_str_2,
@@ -557,7 +557,7 @@ void RF24::printDetails(void)
     printf_P(PSTR("PA Power\t = "
     PRIPSTR
     "\r\n"),(char*)pgm_read_ptr(&rf24_pa_dbm_e_str_P[getPALevel()]));
-
+    printf_P(PSTR("ARC\t\t = %d\r\n"), getARC());
 }
 
 #endif // !defined(MINIMAL)
@@ -691,10 +691,10 @@ void RF24::startListening(void)
     powerUp();
     #endif
     /* Notes Once ready for next release
-    * 1. Can update stopListening() to use config_reg var and ack_payloads_enabled var instead of SPI rx/tx
-    * 2. Update txDelay defaults: 240 for 2MBPS, 280 for 1MBPS, 505 for 250KBPS per initial testing
-    * 3. Allows time for slower devices to update with the faster startListening() function prior to updating stopListening() & adjusting txDelay
-    */
+     * 1. Can update stopListening() to use config_reg var and ack_payloads_enabled var instead of SPI rx/tx
+     * 2. Update txDelay defaults: 240 for 2MBPS, 280 for 1MBPS, 505 for 250KBPS per initial testing
+     * 3. Allows time for slower devices to update with the faster startListening() function prior to updating stopListening() & adjusting txDelay
+     */
     config_reg |= _BV(PRIM_RX);
     write_register(NRF_CONFIG,config_reg);
     write_register(NRF_STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT));
@@ -713,8 +713,8 @@ void RF24::startListening(void)
 }
 
 /****************************************************************************/
-static const uint8_t child_pipe_enable[]
-PROGMEM = {ERX_P0, ERX_P1, ERX_P2, ERX_P3, ERX_P4, ERX_P5};
+static const PROGMEM uint8_t child_pipe_enable[] = {ERX_P0, ERX_P1, ERX_P2,
+                                                    ERX_P3, ERX_P4, ERX_P5};
 
 void RF24::stopListening(void)
 {
@@ -728,7 +728,7 @@ void RF24::stopListening(void)
     }
     //flush_rx();
     config_reg &= ~_BV(PRIM_RX);
-    write_register(NRF_CONFIG, (read_register(NRF_CONFIG)) & ~_BV(PRIM_RX));
+    write_register(NRF_CONFIG,config_reg);
 
     #if defined(RF24_TINY) || defined(LITTLEWIRE)
     // for 3 pins solution TX mode is only left with additonal powerDown/powerUp cycle
@@ -765,7 +765,7 @@ void RF24::powerUp(void)
         // For nRF24L01+ to go from power down mode to TX or RX mode it must first pass through stand-by mode.
         // There must be a delay of Tpd2stby (see Table 16.) after the nRF24L01+ leaves power down mode before
         // the CEis set high. - Tpd2stby can be up to 5ms per the 1.0 datasheet
-        delay(5);
+        delayMicroseconds(RF24_POWERUP_DELAY);
     }
 }
 
@@ -1074,19 +1074,16 @@ bool RF24::available(void)
 
 bool RF24::available(uint8_t* pipe_num)
 {
-    if (!(read_register(FIFO_STATUS) & _BV(RX_EMPTY))) {
+    // get implied RX FIFO empty flag from status byte
+    uint8_t pipe = (get_status() >> RX_P_NO) & 0x07;
+    if (pipe > 5)
+        return 0;
 
-        // If the caller wants the pipe number, include that
-        if (pipe_num) {
-            uint8_t status = get_status();
-            *pipe_num = (status >> RX_P_NO) & 0x07;
-        }
-        return 1;
-    }
+    // If the caller wants the pipe number, include that
+    if (pipe_num)
+        *pipe_num = pipe;
 
-    return 0;
-
-
+    return 1;
 }
 
 /****************************************************************************/
@@ -1146,10 +1143,10 @@ void RF24::openWritingPipe(const uint8_t* address)
 }
 
 /****************************************************************************/
-static const uint8_t child_pipe[]
-PROGMEM = {RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2, RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5};
-static const uint8_t child_payload_size[]
-PROGMEM = {RX_PW_P0, RX_PW_P1, RX_PW_P2, RX_PW_P3, RX_PW_P4, RX_PW_P5};
+static const PROGMEM uint8_t child_pipe[] = {RX_ADDR_P0, RX_ADDR_P1, RX_ADDR_P2,
+                                             RX_ADDR_P3, RX_ADDR_P4, RX_ADDR_P5};
+static const PROGMEM uint8_t child_payload_size[] = {RX_PW_P0, RX_PW_P1, RX_PW_P2,
+                                                     RX_PW_P3, RX_PW_P4, RX_PW_P5};
 
 void RF24::openReadingPipe(uint8_t child, uint64_t address)
 {
@@ -1443,7 +1440,7 @@ bool RF24::setDataRate(rf24_datarate_e speed)
     setup &= ~(_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
 
     #if !defined(F_CPU) || F_CPU > 20000000
-    txDelay = 250;
+    txDelay = 280;
     #else //16Mhz Arduino
     txDelay=85;
     #endif
@@ -1452,7 +1449,7 @@ bool RF24::setDataRate(rf24_datarate_e speed)
         // Making it '10'.
         setup |= _BV(RF_DR_LOW);
         #if !defined(F_CPU) || F_CPU > 20000000
-        txDelay = 450;
+        txDelay = 505;
         #else //16Mhz Arduino
         txDelay = 155;
         #endif
@@ -1462,7 +1459,7 @@ bool RF24::setDataRate(rf24_datarate_e speed)
         if (speed == RF24_2MBPS) {
             setup |= _BV(RF_DR_HIGH);
             #if !defined(F_CPU) || F_CPU > 20000000
-            txDelay = 190;
+            txDelay = 240;
             #else // 16Mhz Arduino
             txDelay = 65;
             #endif
@@ -1568,43 +1565,3 @@ void RF24::stopConstCarrier()
     write_register(RF_SETUP, (read_register(RF_SETUP)) & ~_BV(PLL_LOCK));
     ce(LOW);
 }
-
-//ATTiny support code pulled in from https://github.com/jscrane/RF24
-#if defined(RF24_TINY)
-
-void SPIClass::begin() {
-    // set USCK and DO for output
-    // set DI for input
-        #if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-    DDRB |= (1 << PB2) | (1 << PB1);
-    DDRB &= ~(1 << PB0);
-        #elif defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
-    DDRA |= (1 << PA4) | (1 << PA5);
-    DDRA &= ~(1 << PA6);
-        #elif defined(__AVR_ATtiny2313__) || defined(__AVR_ATtiny4313__)
-    DDRB |= (1 << PB7) | (1 << PB6);
-    DDRB &= ~(1 << PB5);
-        #elif defined(__AVR_ATtiny861__)
-    DDRB |= (1 << PB2) | (1 << PB1);
-    DDRB &= ~(1 << PB0);
-        #endif // defined(__AVR_ATtiny861__)
-    USICR = _BV(USIWM0);
-}
-
-byte SPIClass::transfer(byte b)
-{
-    USIDR = b;
-    USISR = _BV(USIOIF);
-    do {
-        USICR = _BV(USIWM0) | _BV(USICS1) | _BV(USICLK) | _BV(USITC);
-    }
-    while ((USISR & _BV(USIOIF)) == 0);
-    return USIDR;
-}
-
-void SPIClass::end() {}
-void SPIClass::setDataMode(uint8_t mode){}
-void SPIClass::setBitOrder(uint8_t bitOrder){}
-void SPIClass::setClockDivider(uint8_t rate){}
-
-#endif
