@@ -8,6 +8,17 @@
    You must select MIDIx4 from the "Tools > USB Type" menu
 
    This example code is in the public domain.
+
+   9 switches are connected between pins 15-23 and ground.
+   3 switches for each input. The position of each switch
+   determines if MIDI should be forwarded to MIDI OUT 1, 2, and 3 from that input.
+
+   MIDI OUT:     3    2    1 
+   -----------+----+----+----|
+   MIDI IN 1: | 21 | 22 | 23 |
+   MIDI IN 2: | 18 | 19 | 20 |
+   MIDI IN 3: | 15 | 16 | 17 |
+   -----------+----+----+----|
 */
 
 // Create the Serial MIDI ports
