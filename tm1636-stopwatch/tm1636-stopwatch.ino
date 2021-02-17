@@ -89,13 +89,13 @@ void setup() {
      This line sets the RTC with an explicit date & time, for example to set
      January 21, 2014 at 3am you would call: yyyy, mm, dd, hh, MM, ss
   rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));  */
-  //rtc.adjust(DateTime(2020, 1, 19, 21, 14, 0));
+  rtc.adjust(DateTime(2021, 2, 17, 16, 28, 0));
   
   rtcshield.clear();
   rtcshield.pointOn();
   waiting = millis();
-  DISPLAYMODE = 0;
-  OLDDISPLAYMODE = 1;
+  DISPLAYMODE = DISPLAYSTOPWATCH;
+  OLDDISPLAYMODE = DISPLAYTIME;
 }
 
 void isr_handler() {
