@@ -1,9 +1,19 @@
+/*
+   Using the QYF-TM1638 module with Arduino UNO
+   Connect DIO, CLK, and STB to digital pins
+   Connect VCC to 5V
+   Connect GND to GND
+*/
 #include <TM1638.h>
 #include <TM1638QYF.h>
- 
-TM1638QYF module(3, 2, 5);
+
+/* TM1638QYF dataPin, clockPin, strobePin */
+const int DIOPIN = 8;  // TM1638QYF data pin "DIO"
+const int CLKPIN = 9;  // TM1638QYF clock pin "CLK"
+const int STBPIN = 10; // TM1638QYF strobe pin "STB"
+
+TM1638QYF module(DIOPIN, CLKPIN, STBPIN);
 word mode;
- 
  
 void setup()
 {
