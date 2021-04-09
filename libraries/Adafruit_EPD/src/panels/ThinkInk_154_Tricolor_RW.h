@@ -9,16 +9,14 @@ public:
   ThinkInk_154_Tricolor_RW(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST,
                            int8_t CS, int8_t SRCS, int8_t MISO,
                            int8_t BUSY = -1)
-      : Adafruit_SSD1680(250, 152, SID, SCLK, DC, RST, CS, SRCS, MISO, BUSY){};
+      : Adafruit_SSD1680(152, 152, SID, SCLK, DC, RST, CS, SRCS, MISO, BUSY){};
 
   ThinkInk_154_Tricolor_RW(int8_t DC, int8_t RST, int8_t CS, int8_t SRCS,
                            int8_t BUSY = -1, SPIClass *spi = &SPI)
       : Adafruit_SSD1680(152, 152, DC, RST, CS, SRCS, BUSY, spi){};
 
   void begin(thinkinkmode_t mode = THINKINK_MONO) {
-    Adafruit_EPD::begin(true);
-    setBlackBuffer(0, true);
-    setColorBuffer(1, false);
+    Adafruit_SSD1680::begin(true);
 
     inkmode = mode; // Preserve ink mode for ImageReader or others
 
@@ -33,11 +31,6 @@ public:
     setRotation(3);
     powerDown();
   }
-
-  thinkinkmode_t getMode(void) { return inkmode; }
-
-private:
-  thinkinkmode_t inkmode; // Ink mode passed to begin()
 };
 
 #endif // _THINKINK_154_TRI
